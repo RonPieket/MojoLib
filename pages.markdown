@@ -2,13 +2,19 @@ Introduction and Overview {#mainpage}
 =========================
 MojoLib is a collection of algorithms that I developed for Insomniac's proprietary world editor. Its performance and memory behavior is quite configurable, and it should be a good fit in games as well as in tools. MojoLib's most important innovation is the implementation of \ref page_expression
 
-MojoLib focuses on organizing data in memory. The functionality can be roughly divided into three areas:
+What It Is
+----------
+MojoLib is a C++ library focusing on organizing data in memory. Its functionality can be roughly divided into three areas:
 
 - \ref group_container<br/>Several variations on a hash table: a key-only set, a key-value map, a key-multiple-values map, a bi-directional child-to-parent relation table, and a dual ended growable array.
 - \ref group_id<br/>8-byte objects that behave as immutable strings, for use as computationally efficient and yet human-readable object IDs.
 - \ref page_expression<br/>Applied set theory to create rule-based views of the data held in containers.
 
 If you got here and have no idea what MojoLib is used for, the \ref page_example page will clue you in.
+
+Where to Get
+------------
+MojoLib is hosted at [GitHub](https://github.com/RonPieket/MojoLib).
 
 How to Use
 ----------
