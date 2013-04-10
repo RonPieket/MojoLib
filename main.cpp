@@ -5,24 +5,26 @@
  
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
  following conditions are met:
- - Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- disclaimer in the documentation and/or other materials provided with the distribution.
+ - Redistributions of source code must retain the above copyright notice, this list of conditions and the
+ following disclaimer.
+ - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+ following disclaimer in the documentation and/or other materials provided with the distribution.
  
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
- INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
  \file
  \author Ron Pieket \n<http://www.ItShouldJustWorkTM.com> \n<http://twitter.com/RonPieket>
  */
-/* MojoLib is documented at: http://www.itshouldjustworktm.com/mojolib/ */
+/* MojoLib is documented at: http://www.ItShouldJustWorkTM.com/mojolib/ */
+
+// ---------------------------------------------------------------------------------------------------------------
 
 /** \cond IGNORE_SOURCE_CODE */
 
@@ -44,14 +46,14 @@
 #define snprintf _snprintf_s
 #endif
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 static uint32_t Random()
 {
   return ( rand() << 16 ) | rand();
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 class CountingAlloc final : public MojoAlloc
 {
@@ -78,7 +80,7 @@ public:
 
 static CountingAlloc MyCountingAlloc;
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 // I'm using RefCountedInt for other unit tests. Better make sure the class is actually working.
 
 REGISTER_UNIT_TEST( RefCountedIntTest, UnitTest )
@@ -111,7 +113,7 @@ REGISTER_UNIT_TEST( RefCountedIntTest, UnitTest )
   RefCountedInt::ClearInfo();
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 REGISTER_UNIT_TEST( MojoArrayTest, Container )
 {
@@ -120,7 +122,6 @@ REGISTER_UNIT_TEST( MojoArrayTest, Container )
   
   EXPECT_INT( kMojoStatus_Ok, status );
   EXPECT_INT( 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( 0, array.GetCount() );
   
   const int max_count = 1000;
@@ -132,7 +133,6 @@ REGISTER_UNIT_TEST( MojoArrayTest, Container )
     EXPECT_INT( kMojoStatus_Ok, status );
   }
   EXPECT_INT( max_count + 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( max_count + 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( max_count, array.GetCount() );
   
   // Verify value retrieval
@@ -157,7 +157,6 @@ REGISTER_UNIT_TEST( MojoArrayTest, Container )
     array.Unshift( i );
   }
   EXPECT_INT( max_count + 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( max_count + 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( max_count, array.GetCount() );
   
   // Verify pop
@@ -200,14 +199,13 @@ REGISTER_UNIT_TEST( MojoArrayTest, Container )
   
   // Should be back at beginning state.
   EXPECT_INT( 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( 0, array.GetCount() );
   
   array.Destroy();
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 REGISTER_UNIT_TEST( MojoArrayTestEdge, Container )
 {
@@ -215,14 +213,13 @@ REGISTER_UNIT_TEST( MojoArrayTestEdge, Container )
   const int small_count = 100;
 
   MojoConfig config;
-  config.m_AllocCountMin = max_count;
+  config.m_BufferMinCount = max_count;
   config.m_DynamicAlloc = false;
 
   MojoArray< RefCountedInt > array;
   MojoStatus status = array.Create( __FUNCTION__, -1, &config );
   EXPECT_INT( kMojoStatus_Ok, status );
   EXPECT_INT( 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( 0, array.GetCount() );
 
   // Fill it to the brim.
@@ -233,7 +230,6 @@ REGISTER_UNIT_TEST( MojoArrayTestEdge, Container )
   }
 
   EXPECT_INT( max_count + 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( max_count + 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( max_count, array.GetCount() );
 
   // Add some more, should status
@@ -278,20 +274,17 @@ REGISTER_UNIT_TEST( MojoArrayTestEdge, Container )
   }
 
   EXPECT_INT( max_count + 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( max_count + 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( max_count, array.GetCount() );
 
   array.Destroy();
 
   EXPECT_INT( 1, RefCountedInt::s_InfoAssignedCount );  // Remember not_found_value is still in there.
-  EXPECT_INT( 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
 
   // Re-creating a destroyed object should work. (Note this time it's NOT restricted)
   status = array.Create( __FUNCTION__, -1 );
   EXPECT_INT( kMojoStatus_Ok, status );
   EXPECT_INT( 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( 1, RefCountedInt::s_InfoConstructedCount );
 
   // Try some slicing and dicing.
   // Add some content.
@@ -301,13 +294,11 @@ REGISTER_UNIT_TEST( MojoArrayTestEdge, Container )
     EXPECT_INT( kMojoStatus_Ok, status );
   }
   EXPECT_INT( max_count + 1, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( max_count + 1, RefCountedInt::s_InfoConstructedCount );
 
   int value = array.Remove( small_count );
   EXPECT_INT( small_count, value ); // Removed element should be returned
   EXPECT_INT( max_count - 1, array.GetCount() );
   EXPECT_INT( max_count, RefCountedInt::s_InfoAssignedCount );
-  EXPECT_INT( max_count, RefCountedInt::s_InfoConstructedCount );
 
   // Verify new content
   for( int i = 0; i < max_count - 1; ++i )
@@ -324,26 +315,21 @@ REGISTER_UNIT_TEST( MojoArrayTestEdge, Container )
   array.Destroy();
 
   EXPECT_INT( 1, RefCountedInt::s_InfoAssignedCount );  // Remember not_found_value is still in there.
-  EXPECT_INT( 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 REGISTER_UNIT_TEST( MojoMapTest, Container )
 {
-  MojoConfig config;
-  config.m_AllocCountMin     = 10;
-  config.m_TableCountMin     = 10;
-
   MojoMap< MojoHash< uint32_t >, RefCountedInt > map;
-  map.Create( __FUNCTION__, RefCountedInt(), &config );
+  map.Create( __FUNCTION__, RefCountedInt() );
   uint32_t key;
   
   EXPECT_INT( 0, RefCountedInt::s_InfoAssignedCount );
   EXPECT_INT( 0, map.GetCount() );
   
-  const int key_max_count = 100;
+  const int key_max_count = kMojoBufferMinCount * 2;
   uint32_t keys[ key_max_count ];
   
   // Generate keys
@@ -357,7 +343,7 @@ REGISTER_UNIT_TEST( MojoMapTest, Container )
   for( int i = 0; i < key_max_count; ++i )
   {
     key = keys[ i ];
-    map.Insert( key, 5 );
+    EXPECT_INT( kMojoStatus_Ok, map.Insert( key, 5 ) );
   }
   EXPECT_INT( key_max_count, RefCountedInt::s_InfoAssignedCount );
   EXPECT_INT( key_max_count, map.GetCount() );
@@ -377,7 +363,7 @@ REGISTER_UNIT_TEST( MojoMapTest, Container )
   for( int i = 0; i < key_max_count; ++i )
   {
     key = keys[ i ];
-    map.Insert( key, RefCountedInt( i ) );
+    EXPECT_INT( kMojoStatus_Ok, map.Insert( key, RefCountedInt( i ) ) );
   }
   EXPECT_INT( key_max_count, RefCountedInt::s_InfoAssignedCount );
   EXPECT_INT( key_max_count, map.GetCount() );
@@ -411,7 +397,7 @@ REGISTER_UNIT_TEST( MojoMapTest, Container )
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 REGISTER_UNIT_TEST( MojoSetTest, Container )
 {
@@ -495,7 +481,7 @@ REGISTER_UNIT_TEST( MojoSetTest, Container )
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 REGISTER_UNIT_TEST( MojoSetTestString, Container )
 {
@@ -528,7 +514,7 @@ REGISTER_UNIT_TEST( MojoSetTestString, Container )
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 static MojoId MakeId( const char* group, int number )
 {
@@ -536,7 +522,6 @@ static MojoId MakeId( const char* group, int number )
   snprintf( buffer, sizeof buffer, "%s%d", group, number );
   return MojoId( buffer );
 }
-
 
 REGISTER_UNIT_TEST( MojoRelationTest, Container )
 {
@@ -657,14 +642,14 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
   }
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 REGISTER_UNIT_TEST( MojoSetTestStatus, Config )
 {
   // Test invalid arguments
   {
     MojoConfig config;
-    config.m_TableCountMin = 0;
+    config.m_BufferMinCount = 0;
 
     MojoSet< MojoHashable< uint32_t > > set;
     MojoStatus status = set.Create( __FUNCTION__, &config );
@@ -679,8 +664,7 @@ REGISTER_UNIT_TEST( MojoSetTestStatus, Config )
     const int key_max_count = 1000;
 
     MojoConfig config;
-    config.m_TableCountMin = key_max_count;
-    config.m_AllocCountMin = key_max_count;
+    config.m_BufferMinCount = key_max_count;
     config.m_DynamicAlloc = false;
 
     MojoSet< MojoHashable< uint32_t > > set;
@@ -688,28 +672,29 @@ REGISTER_UNIT_TEST( MojoSetTestStatus, Config )
     EXPECT_INT( kMojoStatus_Ok, status );
     
     // Now fill the whole table. This should work.
-    for( int i = 0; i < key_max_count; ++i )
+    int max_fit = key_max_count * kMojoTableGrowThreshold / 100;
+    for( int i = 0; i < max_fit; ++i )
     {
       status = set.Insert( i + 1 );
       EXPECT_INT( kMojoStatus_Ok, status );
     }
 
     // More won't fit. Should not crash but report status.
-    for( int i = key_max_count; i < key_max_count + 10; ++i )
+    for( int i = max_fit; i < max_fit + 10; ++i )
     {
       status = set.Insert( i + 1 );
       EXPECT_INT( kMojoStatus_CouldNotAlloc, status );
     }
 
     // Verify that set is still functional.
-    for( int i = 0; i < key_max_count; ++i )
+    for( int i = 0; i < max_fit; ++i )
     {
       status = set.Remove( i + 1 );
       EXPECT_INT( kMojoStatus_Ok, status );
     }
     
     // Verify keys are really gone.
-    for( int i = 0; i < key_max_count; ++i )
+    for( int i = 0; i < max_fit; ++i )
     {
       EXPECT_FALSE( set.Contains( i + 1 ) );
     }
@@ -719,7 +704,7 @@ REGISTER_UNIT_TEST( MojoSetTestStatus, Config )
   }
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 REGISTER_UNIT_TEST( MojoIdTest, Id )
 {
@@ -751,7 +736,7 @@ REGISTER_UNIT_TEST( MojoIdTest, Id )
   EXPECT_STRING( NULL, MojoId::FindCString( hash1 ) );
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 REGISTER_UNIT_TEST( MojoIdMapTest, Id )
 {
@@ -798,19 +783,12 @@ REGISTER_UNIT_TEST( MojoIdMapTest, Id )
   EXPECT_INT( 0, g_MojoIdManager.GetCount() );
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 static int CountSet( const MojoAbstractSet< MojoId >* set )
 {
   MojoArray< MojoId > output( "result" );
   set->Enumerate( MojoArrayCollector< MojoId >( &output ) );
-/*
-  for( int i = 0; i < output.GetCount(); ++i )
-  {
-    printf( "%s\"%s\"", i ? ", " : "", output[ i ].AsCString() );
-  }
-  printf( "\n" );
-*/
   return output.GetCount();
 }
 
@@ -901,16 +879,16 @@ REGISTER_UNIT_TEST( MojoBooleanTest, Boolean )
                                                             // "Helicopter"
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 /*
- See illustration on the Set Functions documentation page. The test uses the relation and input sets that are used in
- the pictures.
+ See illustration on the Set Functions documentation page. The test uses the relation and input sets that are used
+ in the pictures.
  The table is organized as follows. Each of the eight rows corresponds to one of the eight variations. Each column
  represents an output key: A, B, C, D, and E. The string for each output key contains all th einput keys that will
  cause the output key to be included.
  For example, the second entry in the first row id "AC". The fact that it's the first row means that this is about
- the MojoFnDirectOpenShallow variation. The fact that it's the second entry means this is about output key 'B'. The
- string "AC" means that 'B' should only be in the output if either 'A' or 'C' are in the input.
+ the MojoFnDirectOpenShallow variation. The fact that it's the second entry means this is about output key 'B'.
+ The string "AC" means that 'B' should only be in the output if either 'A' or 'C' are in the input.
  */
 
 static const char* g_FuncTestInfo[ 8 ][ 5 ] =
@@ -996,7 +974,7 @@ REGISTER_UNIT_TEST( MojoFnTest, Function )
   }
 }
 
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 
 int main( int argc, const char** argv )
 {
@@ -1020,6 +998,6 @@ int main( int argc, const char** argv )
   return error_count;
 }
 
-// -------------------------------------------------------------------------------------------------------------------
-
 /** \endcond */
+
+// ---------------------------------------------------------------------------------------------------------------

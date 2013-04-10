@@ -5,24 +5,27 @@
  
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
  following conditions are met:
- - Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- disclaimer in the documentation and/or other materials provided with the distribution.
+ - Redistributions of source code must retain the above copyright notice, this list of conditions and the
+ following disclaimer.
+ - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+ following disclaimer in the documentation and/or other materials provided with the distribution.
  
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
- INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
  \file
  \author Ron Pieket \n<http://www.ItShouldJustWorkTM.com> \n<http://twitter.com/RonPieket>
  */
-/* MojoLib is documented at: http://www.itshouldjustworktm.com/mojolib/ */
+/* MojoLib is documented at: http://www.ItShouldJustWorkTM.com/mojolib/ */
+
+// ---------------------------------------------------------------------------------------------------------------
+
 #pragma once
 
 // -- Mojo
@@ -35,8 +38,8 @@
 /**
  \class MojoRelation
  \ingroup group_container
- Defines a many-to-one relation, such as child to parent. Each child can have only one parent. A parent can have any
- number of children.
+ Defines a many-to-one relation, such as child to parent. Each child can have only one parent. A parent can have
+ any number of children.
  Also implements the MojoAbstractSet interface. As a MojoAbstractSet, the children are considered the elements.
  \see MojoForEachChildOfParent
  \tparam key_T Key type. Must be hashable.
@@ -62,10 +65,10 @@ public:
    Initializing constructor. No need to call Create().
    \param[in] name The name of the map. Will also be used for internal memory allocation.
    \param[in] not_found_value The value to return if nothing was found.
-   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig for
-   details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc for
-   details on how to set the global default.
+   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
+   for details on how to set a global default.
+   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the map will use for storage. If specified, no memory
    allocation will be used.
    \param[in] fixed_array_count Number of entries in the array.
@@ -81,10 +84,10 @@ public:
    Create after default constructor or Destroy().
    \param[in] name The name of the map. Will also be used for internal memory allocation.
    \param[in] not_found_value The value to return if nothing was found.
-   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig for
-   details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc for
-   details on how to set the global default.
+   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
+   for details on how to set a global default.
+   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the map will use for storage. If specified, no memory
    allocation will be used.
    \param[in] fixed_array_count Number of entries in the array.
@@ -101,7 +104,7 @@ public:
   /**
    Remove all entries.
    */
-  void Reset();
+  MojoStatus Clear();
   
   /**
    Insert relation. If child key already exists in map, its parent will be replaced.
@@ -152,13 +155,6 @@ public:
   key_T operator[]( const key_T& child ) const { return FindParent( child ); }
   
   /**
-   Update table sizes, if needed. This is only useful if the config specified no dynamic memory allocation. If dynamic
-   memory allocation is allowed, tables are resized as needed during Insert() or Remove(), and Update() is unnecessary.
-   \return Status code.
-   */
-  MojoStatus Update();
-  
-  /**
    Return table status state. This is the only way to find out if something went wrong in the default constructor.
    If Create() was used, the returned status code will be the same.
    \return Status code.
@@ -178,8 +174,8 @@ public:
   const char* GetName() const { return m_Name; }
   
   /**
-   Get index of first occupied slot in table. This is used for the ForEach... macros. It must be declared public to
-   work with the macros, but should be considered private.
+   Get index of first occupied slot in table. This is used for the ForEach... macros. It must be declared public
+   to work with the macros, but should be considered private.
    \private
    */
   int _GetFirstIndex() const;
@@ -192,8 +188,8 @@ public:
   int _GetNextIndex( int index ) const;
 
   /**
-   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work with
-   the macros, but should be considered private.
+   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work
+   with the macros, but should be considered private.
    \private
    */
   bool _IsIndexValid( int index ) const;
@@ -206,29 +202,29 @@ public:
   key_T _GetKeyAt( int index ) const;
 
   /**
-   Get index of next slot in table with matching key. This is used for the ForEach... macros. It must be declared public
-   to work with the macros, but should be considered private.
+   Get index of next slot in table with matching key. This is used for the ForEach... macros. It must be declared
+   public to work with the macros, but should be considered private.
    \private
    */
   int _GetFirstIndexOf( const key_T& key ) const;
 
   /**
-   Get index of next slot in table with matching key. This is used for the ForEach... macros. It must be declared public
-   to work with the macros, but should be considered private.
+   Get index of next slot in table with matching key. This is used for the ForEach... macros. It must be declared
+   public to work with the macros, but should be considered private.
    \private
    */
   int _GetNextIndexOf( const key_T& key, int index ) const;
 
   /**
-   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work with
-   the macros, but should be considered private.
+   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work
+   with the macros, but should be considered private.
    \private
    */
   bool _IsIndexValidOf( const key_T& key, int index ) const;
 
   /**
-   Get value at a specific index in the table. This is used for the ForEach... macros. It must be declared public to
-   work with the macros, but should be considered private.
+   Get value at a specific index in the table. This is used for the ForEach... macros. It must be declared public
+   to work with the macros, but should be considered private.
    \private
    */
   key_T _GetValueAt( int index ) const;
@@ -251,7 +247,7 @@ private:
   void Init();
 };
 
-// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 // Inline implementations
 
 template< typename key_T >
@@ -273,8 +269,9 @@ MojoStatus MojoRelation< key_T >::GetStatus() const
 }
 
 template< typename key_T >
-MojoStatus MojoRelation< key_T >::Create( const char* name, const key_T& not_found_value, const MojoConfig* config,
-                                        MojoAlloc* alloc, KeyValue* fixed_array, int fixed_array_count)
+MojoStatus MojoRelation< key_T >::Create( const char* name, const key_T& not_found_value,
+                                         const MojoConfig* config, MojoAlloc* alloc, KeyValue* fixed_array,
+                                         int fixed_array_count)
 {
   m_Name = name;
   int count = fixed_array_count / 2;
@@ -303,10 +300,11 @@ void MojoRelation< key_T >::Destroy()
 }
 
 template< typename key_T >
-void MojoRelation< key_T >::Reset()
+MojoStatus MojoRelation< key_T >::Clear()
 {
-  m_ParentToChild.Reset();
-  m_ChildToParent.Reset();
+  MojoStatus status1 = m_ParentToChild.Clear();
+  MojoStatus status2 = m_ChildToParent.Clear();
+  return status1 ? status1 : status2;
 }
 
 template< typename key_T >
@@ -360,17 +358,6 @@ MojoStatus MojoRelation< key_T >::RemoveParent( const key_T& parent )
     return m_ParentToChild.Remove( parent );
   }
   return kMojoStatus_NotFound;
-}
-
-template< typename key_T >
-MojoStatus MojoRelation< key_T >::Update()
-{
-  MojoStatus status = m_ChildToParent.Update();
-  if( !status )
-  {
-    status = m_ParentToChild.Update();
-  }
-  return status;
 }
 
 template< typename key_T >
@@ -482,6 +469,8 @@ key_T MojoRelation< key_T >::_GetValueAt( int index ) const
   return m_ParentToChild._GetValueAt( index );
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+
 /**
  \ingroup group_container
  A macro to help you iterate over all children of a given parent in a MojoRelation
@@ -493,5 +482,8 @@ key_T MojoRelation< key_T >::_GetValueAt( int index ) const
  */
 #define MojoForEachChildOfParent( container, parent, child_variable ) \
 for( int _i = ( container )._GetFirstIndexOf( parent ); \
-    ( container )._IsIndexValidOf( parent, _i ) ? ( child_variable = ( container )._GetValueAt( _i ), true ) : false; \
-    _i = ( container )._GetNextIndexOf( parent, _i ) )
+  ( container )._IsIndexValidOf( parent, _i ) ? \
+  ( child_variable = ( container )._GetValueAt( _i ), true ) : false; \
+  _i = ( container )._GetNextIndexOf( parent, _i ) )
+
+// ---------------------------------------------------------------------------------------------------------------

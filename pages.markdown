@@ -4,7 +4,7 @@ MojoLib is a collection of algorithms that I developed for Insomniac's proprieta
 
 What It Is
 ----------
-MojoLib is a C++ library focusing on organizing data in memory. Its functionality can be roughly divided into three areas:
+MojoLib is a C++ library focusing on organizing data in memory. Its functionality can be divided into three areas:
 
 - \ref group_container<br/>Several variations on a hash table: a key-only set, a key-value map, a key-multiple-values map, a bi-directional child-to-parent relation table, and a dual ended growable array.
 - \ref group_id<br/>8-byte objects that behave as immutable strings, for use as computationally efficient and yet human-readable object IDs.
@@ -242,7 +242,7 @@ For more details of how abstract sets are applied in the Insomniac world editor,
 
 ------------------------------------------------------------------------------------------------------------------------
 
-\page page_optimization Configuration and Optimization
+\page page_configuration Configuration
 
 Hash Table Density
 ------------------
@@ -252,14 +252,41 @@ The entire hash table is a single contiguous array. If a hash collision occurs, 
 
 Underpopulation can negatively impact performance. If only a few slots are occupied in a large, mostly empty table, cache misses are more likely. Therefore, when during removal of keys, the density falls below 30%, a smaller table is allocated and repopulated.
 
-Configuration
--------------
-This growing and shrinking behavior is designed to offer the best possible look-up performance. But memory (re-)allocation and data copying is not free. MojoLib offers several ways to customize memory and data copying behavior, to suit your application needs and platform restraints. See the MojoConfig and MojoAlloc documentation for details.
+Growing and Shrinking
+---------------------
+This growing and shrinking behavior is designed to offer the best possible lookup performance. But memory (re-)allocation and data copying is not free. You may disable the growing and shrinking behavior. In a MojoConfig object, set m_DynamicTable to false, and set m_BufferMinCount to a size large enough to contain all the data you are going to store in the container. In the case of hash tables, only 80% of the table can be used, plan accordingly.
 
-Behavior and memory allocation can be configured per container by passing in a MojoConfig and/or a MojoAlloc object during container initialization, or globally by calling MojoConfig::SetDefault() or MojoConfig::SetDefault(). If you do neither, MojoLib will use `malloc()` and `free()` for memory allocation.
+The next section will explain what you can do with the MojoConfig object.
 
-Caching Intermediate Results
-----------------------------
+Memory Management
+-----------------
+How memory management is handled is highly application dependent. And I know how persnickety games programmers can be about memory allocations. In MojoLib, you may specify *where* memory is allocated from, and *when* it is allocated. This can be configured per container, as well as globally.
+
+Where to allocate from:
+- **System heap** - do nothing. This is the default behavior. MojoLib will use malloc() and free()
+- **Custom heap** - define a specialization of MojoAlloc, overriding Allocate() and Free() to defer to your own heap manager.
+
+When to allocate:
+- **As needed** - do nothing. This is the default behavior
+- **At initialization only** - in a MojoConfig object, set m_DynamicAlloc to false, and set m_BufferMinCount to a size large enough to contain all the data you are going to store in the container. In the case of hash tables, only 80% of the table can be used, plan accordingly.
+- **Compile time only** - declare workspace arrays at compile time, pass a pointer to the array to the \link MojoSet::MojoSet(const char*,const MojoConfig*,MojoAlloc*,key_T*,int) initializing constructor\endlink or to \link MojoSet::Create() Create()\endlink
+
+Both the MojoAlloc object and the MojoConfig object may be passed as an argument to the \link MojoSet::MojoSet(const char*,const MojoConfig*,MojoAlloc*,key_T*,int) initializing constructor\endlink or to \link MojoSet::Create() Create()\endlink
+
+You may make a MojoAlloc or MojoConfig object the global default by calling MojoAlloc::SetDefault() of MojoConfig::SetDefault() respectively. This will store a pointer to your object, so make sure it is not on the stack.
+
+m_DynamicTable vs. m_DynamicAlloc
+---------------------------------
+A hash table is stored in a buffer. The table may be smaller than the buffer, but obviously not larger.
+
+As noted above, MojoConfig::m_DynamicTable controls whether or not the table is resized dynamically. MojoConfig::m_DynamicAlloc controls whether the buffer can be resized. Resizing the *table* can be done without resizing the *buffer*, as long as the table size does not exceed the buffer size. Shrinking and growing the table within the buffer will improve lookup performance (by keeping the table dense, thus memory cache friendly), without calling out to the heap manager.
+
+\image html drinkme.png
+
+------------------------------------------------------------------------------------------------------------------------
+
+\page page_caching Caching Intermediate Results
+
 Normally, a set expression is evaluated when Contains() or Enumerate() is called. The result is not stored, but returned to the caller. This ensures that Contains() and Enumerate() always return results based on the current state of the containers at the expression leaves. MojoLib tries to optimize evaluation in several ways. However, if you have an expression or sub-expression that:
 
 - is complex, and

@@ -5,24 +5,27 @@
  
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
  following conditions are met:
- - Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- disclaimer in the documentation and/or other materials provided with the distribution.
+ - Redistributions of source code must retain the above copyright notice, this list of conditions and the
+ following disclaimer.
+ - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+ following disclaimer in the documentation and/or other materials provided with the distribution.
  
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
- INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
  \file
  \author Ron Pieket \n<http://www.ItShouldJustWorkTM.com> \n<http://twitter.com/RonPieket>
  */
-/* MojoLib is documented at: http://www.itshouldjustworktm.com/mojolib/ */
+/* MojoLib is documented at: http://www.ItShouldJustWorkTM.com/mojolib/ */
+
+// ---------------------------------------------------------------------------------------------------------------
+
 #pragma once
 
 // Standard Libs
@@ -56,10 +59,10 @@ public:
    Initializing constructor allocates resources and prepares array for use.
    \param[in] name The name of the array. This will be passed to the allocator.
    \param[in] not_found_value Value to be returned if index was out of range.
-   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig for
-   details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc for
-   details on how to set the global default.
+   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
+   for details on how to set a global default.
+   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   for details on how to set the global default.
    \param[in] fixed_array If dynamic memory allocation is not desired, specify an array of `value_T` to use.
    \param[in] fixed_array_count Size of `fixed_array`.
    */
@@ -74,16 +77,17 @@ public:
    Allocate resources and prepare array for use.
    \param[in] name The name of the array. This will be passed to the allocator.
    \param[in] not_found_value Value to be returned if index was out of range.
-   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig for
-   details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc for
-   details on how to set the global default.
+   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
+   for details on how to set a global default.
+   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   for details on how to set the global default.
    \param[in] fixed_array If dynamic memory allocation is not desired, specify an array of `value_T` to use.
    \param[in] fixed_array_count Size of `fixed_array`.
    \return Status code
    */
-  MojoStatus Create( const char* name, const value_T& not_found_value = value_T(), const MojoConfig* config = NULL,
-                   MojoAlloc* alloc = NULL, value_T* fixed_array = NULL, int fixed_array_count = 0 );
+  MojoStatus Create( const char* name, const value_T& not_found_value = value_T(),
+                    const MojoConfig* config = NULL, MojoAlloc* alloc = NULL, value_T* fixed_array = NULL,
+                    int fixed_array_count = 0 );
 
   /**
    Return table status state. This is the only way to find out if something went wrong in the default constructor.
@@ -102,7 +106,7 @@ public:
   /**
    Remove all elements from the array.
    */
-  void Reset();
+  MojoStatus Clear();
 
   /**
    Append value at the end of the array.
@@ -156,8 +160,8 @@ public:
    The elements after will move down.
    \param[in] index The index into the array.
    If index is negative, it is from the end otf the array. For example, -1 indicates the last element.
-   \param[in] count the number of elements to remove. If omitted, all elements from `index` to the end of the array will
-   be removed.
+   \param[in] count the number of elements to remove. If omitted, all elements from `index` to the end of the
+   array will be removed.
    \return Status code.
    */
   MojoStatus RemoveRange( int index, int count = INT_MAX );
@@ -200,12 +204,12 @@ public:
    Test presence of a value.
    \param[in] value The value to look for.
    \return true if value is present
-   \warning This is a performance hazard. The array is simply scanned. Use only with small arrays, or where performance
-   is not an issue.
+   \warning This is a performance hazard. The array is simply scanned. Use only with small arrays, or where
+   performance is not an issue.
    */
   virtual bool Contains( const value_T& value ) const override;
 
-  virtual void Enumerate( const MojoCollector< value_T >& push,
+  virtual void Enumerate( const MojoCollector< value_T >& collector,
                          const MojoAbstractSet< value_T >* limit = NULL ) const override;
   /** \private */
   virtual int _GetEnumerationCost() const override;
@@ -216,32 +220,26 @@ private:
 
   MojoAlloc*          m_Alloc;
   const char*         m_Name;
-  value_T*            m_Values;
+  value_T*            m_Buffer;
   value_T             m_NotFoundValue;
 
   int                 m_StartIndex;
   int                 m_ActiveCount;
-  int                 m_AllocCount;       // Entries allocated
+  int                 m_BufferCount;       // Entries allocated
   int                 m_ChangeCount;
-  MojoStatus           m_Status;
-
-  int                 m_AllocCountMin;
-  int                 m_TableCountMin;
-  bool                m_AutoGrow;
-  bool                m_AutoShrink;
-  bool                m_DynamicAlloc;
+  MojoStatus          m_Status;
+  MojoConfig          m_Config;
 
   void Init();
-  void DestructValues();
-  void Resize( int new_capacity );
-  void Grow();
-  void Shrink();
-  void AutoGrow();
-  void AutoShrink();
-  void Move( int from_index, int to_index, int count );
+  MojoStatus Resize( int new_capacity );
+  MojoStatus Grow( int count = 1 );
+  MojoStatus Shrink();
+  void Move( int from_index, int to_index, int count, bool clear );
+  value_T* AllocAndConstruct( int new_buffer_count );
+  void DestructAndFree( value_T* old_buffer, int old_buffer_count );
 };
 
-// ---------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------------------------------------
 // Inline implementations
 
 /**
@@ -272,17 +270,18 @@ void MojoArray< value_T >::Init()
 {
   m_Alloc = NULL;
   m_Name = NULL;
-  m_Values = NULL;
+  m_Buffer = NULL;
   m_StartIndex = 0;
-  m_AllocCount = 0;
+  m_BufferCount = 0;
   m_ActiveCount = 0;
   m_ChangeCount = 0;
   m_Status = kMojoStatus_NotInitialized;
 }
 
 template< typename value_T >
-MojoStatus MojoArray< value_T >::Create( const char* name, const value_T& not_found_value, const MojoConfig* config,
-                                       MojoAlloc* alloc, value_T* fixed_array, int fixed_array_count )
+MojoStatus MojoArray< value_T >::Create( const char* name, const value_T& not_found_value,
+                                        const MojoConfig* config, MojoAlloc* alloc, value_T* fixed_array,
+                                        int fixed_array_count )
 {
   if( !config )
   {
@@ -292,33 +291,34 @@ MojoStatus MojoArray< value_T >::Create( const char* name, const value_T& not_fo
   {
     alloc = MojoAlloc::GetDefault();
   }
-
-  m_Status           = kMojoStatus_Ok;
-
-  m_Alloc           = fixed_array ? NULL : alloc;
-  m_Name            = name;
-  m_NotFoundValue   = not_found_value;
-  m_Values          = fixed_array;
-  m_AllocCount      = fixed_array_count;
-
-  m_AllocCountMin   = config->m_AllocCountMin;
-  m_TableCountMin   = config->m_TableCountMin;
-  m_AutoGrow        = config->m_AutoGrow;
-  m_AutoShrink      = config->m_AutoShrink;
-  m_DynamicAlloc    = config->m_DynamicAlloc && m_Alloc;
-
-  m_StartIndex = 0;
-  m_AllocCount = 0;
-  m_ActiveCount = 0;
-  
-  if( !m_Values )
+  if( config->m_BufferMinCount < kMojoTableMinCount )
   {
-    Resize( m_AllocCountMin );
+    m_Status = kMojoStatus_InvalidArguments;
   }
-  
-  if( !m_Values )
+  else
   {
-    m_Status = kMojoStatus_CouldNotAlloc;
+    m_Name            = name;
+    m_Alloc           = alloc;
+    m_Config          = *config;
+    m_NotFoundValue   = not_found_value;
+
+    if( fixed_array_count )
+    {
+      m_Config.m_DynamicAlloc = false;
+      m_Config.m_BufferMinCount = fixed_array_count;
+      m_Alloc                 = NULL; // Destroy relies on this to not free memory.
+      
+      m_Buffer                = fixed_array;
+      m_BufferCount           = fixed_array_count;
+      // Note to self: fixed array is assumed to consist of constructed values. Don't call Construct() here.
+    }
+    else
+    {
+      m_BufferCount           = m_Config.m_BufferMinCount;
+      m_Buffer                = AllocAndConstruct( m_BufferCount );
+    }
+    
+    m_Status = m_Buffer ? kMojoStatus_Ok : kMojoStatus_CouldNotAlloc;
   }
   return m_Status;
 }
@@ -338,24 +338,61 @@ MojoStatus MojoArray< value_T >::GetStatus() const
 template< typename value_T >
 void MojoArray< value_T >::Destroy()
 {
-  Resize( 0 );
+  if( m_Alloc )
+  {
+    DestructAndFree( m_Buffer, m_BufferCount );
+  }
   Init();
 }
 
 template< typename value_T >
-void MojoArray< value_T >::Reset()
+MojoStatus MojoArray< value_T >::Clear()
 {
-  DestructValues();
+  for( int i = 0; i < m_ActiveCount; ++i )
+  {
+    int index = ( m_StartIndex + i ) % m_BufferCount;
+    m_Buffer[ index ] = value_T();
+  }
   m_StartIndex = 0;
   m_ActiveCount = 0;
   m_ChangeCount += 1;
-  Resize( m_AllocCountMin );
+  return Resize( m_Config.m_BufferMinCount );
 }
 
 template< typename value_T >
 MojoStatus MojoArray< value_T >::Insert( int index, const value_T& value )
 {
-  m_ChangeCount += 1;
+  MojoStatus status = m_Status;
+  if( !status )
+  {
+    status = Grow();
+    if( !status )
+    {
+      // Negative index means "from the end". Calculate positive equivalent.
+      index = ( index + m_ActiveCount ) % m_ActiveCount;
+
+      int start_count = index;
+      int end_count = m_ActiveCount - index;
+      if( end_count < start_count )
+      {
+        // Mode the end portion.
+        Move( index, index + 1, end_count, false );
+        int i = ( m_StartIndex + i ) % m_BufferCount;
+        m_Buffer[ i ] = value;
+      }
+      else
+      {
+        // Move the start
+        Move( 0, -1, start_count, false );
+        m_StartIndex = ( m_StartIndex - 1 + m_BufferCount ) % m_BufferCount;
+        int i = ( m_StartIndex + i ) % m_BufferCount;
+        m_Buffer[ i ] = value;
+      }
+      m_ActiveCount += 1;
+      m_ChangeCount += 1;
+    }
+  }
+  return status;
 }
 
 template< typename value_T >
@@ -374,8 +411,48 @@ value_T MojoArray< value_T >::Remove( int index )
 }
 
 template< typename value_T >
-void MojoArray< value_T >::Move( int from_index, int to_index, int count )
+void MojoArray< value_T >::Move( int from_index, int to_index, int count, bool clear )
 {
+  // Avoid trouble with mod operation when moving below index 0.
+  from_index += m_BufferCount;
+  to_index += m_BufferCount;
+
+  if( to_index < from_index )
+  {
+    // Move down
+    for( int i = 0; i < count; ++i )
+    {
+      int to = ( m_StartIndex + to_index + i ) % m_BufferCount;
+      int from = ( m_StartIndex + from_index + i ) % m_BufferCount;
+      m_Buffer[ to ] = m_Buffer[ from ];
+    }
+    if( clear )
+    {
+      for( int i = to_index + count; i < from_index + count; ++i )
+      {
+        int index = ( m_StartIndex + i ) % m_BufferCount;
+        m_Buffer[ index ] = value_T();
+      }
+    }
+  }
+  else if( to_index > from_index )
+  {
+    // Move up
+    for( int i = count - 1; i >= 0; --i )
+    {
+      int to = ( m_StartIndex + to_index + i ) % m_BufferCount;
+      int from = ( m_StartIndex + from_index + i ) % m_BufferCount;
+      m_Buffer[ to ] = m_Buffer[ from ];
+    }
+    if( clear )
+    {
+      for( int i = from_index; i < to_index; ++i )
+      {
+        int index = ( m_StartIndex + i ) % m_BufferCount;
+        m_Buffer[ index ] = value_T();
+      }
+    }
+  }
 }
 
 template< typename value_T >
@@ -389,51 +466,30 @@ MojoStatus MojoArray< value_T >::RemoveRange( int index, int count )
   {
     return kMojoStatus_Ok;
   }
+  // Calculate positive index.
   index = ( index + m_ActiveCount ) % m_ActiveCount;
+  // count == INT_MAX means "to the end"
   count = MojoMin( count, m_ActiveCount - index );
-  // Decide whether it is more efficient to move the start or the end of the array.
 
+  // Decide whether it is more efficient to move the start or the end of the array.
   int start_count = index;
   int end_count = m_ActiveCount - index - count;
   if( end_count < start_count )
   {
-    // Move the end.
-    for( int i = 0; i < end_count; ++i )
-    {
-      int to = ( m_StartIndex + index + i ) % m_AllocCount;
-      int from = ( m_StartIndex + index + count + i ) % m_AllocCount;
-      m_Values[ to ] = m_Values[ from ];
-    }
-    // Destruct the value that have fallen off the end.
-    for( int i = 0; i < count; ++i )
-    {
-      int to = ( m_StartIndex + index + end_count + i ) % m_AllocCount;
-      m_Values[ to ].~value_T();
-    }
+    // Mode the end portion.
+    Move( index + count, index, end_count, true );
     m_ActiveCount -= count;
     m_ChangeCount += 1;
   }
   else
   {
-    // Move the start
-    for( int i = 0; i < start_count; ++i )
-    {
-      int to = ( m_StartIndex + index + count - 1 - i + m_AllocCount ) % m_AllocCount;
-      int from = ( m_StartIndex + index - 1 - i + m_AllocCount ) % m_AllocCount;
-      m_Values[ to ] = m_Values[ from ];
-    }
-    // Destruct the value that have fallen off the start.
-    for( int i = 0; i < count; ++i )
-    {
-      int to = ( m_StartIndex + i ) % m_AllocCount;
-      m_Values[ to ].~value_T();
-    }
-    m_StartIndex = ( m_StartIndex + count ) % m_AllocCount;
+    // Move the start portion.
+    Move( 0, count, start_count, true );
+    m_StartIndex = ( m_StartIndex + count ) % m_BufferCount;
     m_ActiveCount -= count;
     m_ChangeCount += 1;
   }
-  AutoShrink();
-  return kMojoStatus_Ok;
+  return Shrink();
 }
 
 template< typename value_T >
@@ -442,15 +498,11 @@ MojoStatus MojoArray< value_T >::Push( const value_T& value )
   MojoStatus status = m_Status;
   if( !status )
   {
-    AutoGrow();
-    if( m_ActiveCount == m_AllocCount )
+    status = Grow();
+    if( !status )
     {
-      status = kMojoStatus_CouldNotAlloc;
-    }
-    else
-    {
-      int index = ( m_StartIndex + m_ActiveCount ) % m_AllocCount;
-      new( m_Values + index ) value_T( value );
+      int index = ( m_StartIndex + m_ActiveCount ) % m_BufferCount;
+      m_Buffer[ index ] = value;
       m_ActiveCount += 1;
       m_ChangeCount += 1;
     }
@@ -465,12 +517,12 @@ value_T MojoArray< value_T >::Pop()
   {
     return m_NotFoundValue;
   }
-  int index = ( m_StartIndex + m_ActiveCount - 1 + m_AllocCount ) % m_AllocCount;
-  value_T value = m_Values[ index ];
-  m_Values[ index ].~value_T();
+  int index = ( m_StartIndex + m_ActiveCount - 1 + m_BufferCount ) % m_BufferCount;
+  value_T value = m_Buffer[ index ];
+  m_Buffer[ index ] = value_T();
   m_ActiveCount -= 1;
   m_ChangeCount += 1;
-  AutoShrink();
+  Shrink();
   return value;
 }
 
@@ -480,15 +532,11 @@ MojoStatus MojoArray< value_T >::Unshift( const value_T& value )
   MojoStatus status = m_Status;
   if( !status )
   {
-    AutoGrow();
-    if( m_ActiveCount == m_AllocCount )
+    status = Grow();
+    if( !status )
     {
-      status = kMojoStatus_CouldNotAlloc;
-    }
-    else
-    {
-      int index = ( m_StartIndex - 1 + m_AllocCount ) % m_AllocCount;
-      new( m_Values + index ) value_T( value );
+      int index = ( m_StartIndex - 1 + m_BufferCount ) % m_BufferCount;
+      m_Buffer[ index ] = value;
       m_StartIndex = index;
       m_ActiveCount += 1;
       m_ChangeCount += 1;
@@ -505,12 +553,12 @@ value_T MojoArray< value_T >::Shift()
     return m_NotFoundValue;
   }
   int index = m_StartIndex;
-  value_T value = m_Values[ index ];
-  m_Values[ index ].~value_T();
-  m_StartIndex = ( m_StartIndex + 1 ) % m_AllocCount;
+  value_T value = m_Buffer[ index ];
+  m_Buffer[ index ] = value_T();
+  m_StartIndex = ( m_StartIndex + 1 ) % m_BufferCount;
   m_ActiveCount -= 1;
   m_ChangeCount += 1;
-  AutoShrink();
+  Shrink();
   return value;
 }
 
@@ -526,7 +574,7 @@ value_T MojoArray< value_T >::GetAt( int index ) const
   if( !m_Status && index < m_ActiveCount && index >= -m_ActiveCount )
   {
     index = ( index + m_ActiveCount ) % m_ActiveCount;
-    return m_Values[ ( index + m_StartIndex ) % m_AllocCount ];
+    return m_Buffer[ ( index + m_StartIndex ) % m_BufferCount ];
   }
   else
   {
@@ -535,91 +583,92 @@ value_T MojoArray< value_T >::GetAt( int index ) const
 }
 
 template< typename value_T >
-void MojoArray< value_T >::DestructValues()
+value_T* MojoArray< value_T >::AllocAndConstruct( int new_buffer_count )
 {
-  for( int i = m_StartIndex; i < m_StartIndex + m_ActiveCount; ++i )
+  value_T* new_buffer = ( value_T* )m_Alloc->Allocate( new_buffer_count * sizeof( value_T ), m_Name );
+  if( new_buffer )
   {
-    m_Values[ i % m_AllocCount ].~value_T();
-  }
-}
-
-template< typename value_T >
-void MojoArray< value_T >::Resize( int new_capacity )
-{
-  if( new_capacity == 0 )
-  {
-    if( m_AllocCount )
+    for( int i = 0; i < new_buffer_count; ++i )
     {
-      // Free old memory
-      DestructValues();
-      if( m_Values )
-      {
-        m_Alloc->Free( m_Values );
-        m_Values = NULL;
-      }
-      m_StartIndex = 0;
-      m_ActiveCount = 0;
-      m_ChangeCount += 1;
+      new( new_buffer + i ) value_T();
     }
   }
-  else if( new_capacity > m_AllocCount )
+  return new_buffer;
+}
+
+template< typename value_T >
+void MojoArray< value_T >::DestructAndFree( value_T* old_buffer, int old_buffer_count )
+{
+  if( old_buffer )
   {
-    // Allocate some new memory
-    value_T* new_values = ( value_T* )m_Alloc->Allocate( new_capacity * sizeof( value_T ), m_Name );
-    
-    // Copy used portion from old to new array
-    for( int i = 0; i < m_ActiveCount; ++i )
+    for( int i = 0; i < old_buffer_count; ++i )
     {
-      new( new_values + i ) value_T( GetAt( i ) );
+      old_buffer[ i ].~value_T();
     }
-    
-    if( m_Values )
+    m_Alloc->Free( old_buffer );
+  }
+}
+
+template< typename value_T >
+MojoStatus MojoArray< value_T >::Resize( int new_capacity )
+{
+  if( m_Status )
+  {
+    return m_Status;
+  }
+
+  if( !m_Config.m_DynamicAlloc || !m_Config.m_DynamicTable )
+  {
+    return kMojoStatus_CouldNotAlloc;
+  }
+
+  value_T* new_buffer = AllocAndConstruct( new_capacity );
+
+  if( !new_buffer )
+  {
+    return kMojoStatus_CouldNotAlloc;
+  }
+
+  // Copy used portion from old to new array
+  for( int i = 0; i < m_ActiveCount; ++i )
+  {
+    new_buffer[ i ] = GetAt( i );
+  }
+
+  DestructAndFree( m_Buffer, m_BufferCount );
+  m_Buffer = new_buffer;
+  m_BufferCount = new_capacity;
+  m_StartIndex = 0;
+  
+  return kMojoStatus_Ok;
+}
+
+template< typename value_T >
+MojoStatus MojoArray< value_T >::Grow( int count )
+{
+  if( GetCount() + count > m_BufferCount )
+  {
+    int new_buffer_count = m_BufferCount * 2;
+    while( GetCount() + count > new_buffer_count )
     {
-      // Free old memory
-      DestructValues();
-      m_Alloc->Free( m_Values );
+      new_buffer_count *= 2;
     }
-    
-    m_Values = new_values;
-    m_AllocCount = new_capacity;
-    m_StartIndex = 0;
+    return Resize( new_buffer_count );
   }
+  return kMojoStatus_Ok;
 }
 
 template< typename value_T >
-void MojoArray< value_T >::Grow()
+MojoStatus MojoArray< value_T >::Shrink()
 {
-  if( !m_Status && m_DynamicAlloc && GetCount() == m_AllocCount )
+  // Less than 25% full
+  if( m_Config.m_DynamicAlloc &&
+     GetCount() * 100 < m_BufferCount * 25 &&
+     m_BufferCount > m_Config.m_BufferMinCount )
   {
-    Resize( m_AllocCount * 2 );
+    return Resize( m_BufferCount / 2 );
   }
-}
-
-template< typename value_T >
-void MojoArray< value_T >::Shrink()
-{
-  if( !m_Status && m_DynamicAlloc && GetCount() * 4 < m_AllocCount && m_AllocCount > m_AllocCountMin )
-  {
-    Resize( MojoMax( m_AllocCount / 2, m_AllocCountMin ) );
-  }
-}
-
-template< typename value_T >
-void MojoArray< value_T >::AutoGrow()
-{
-  if( !m_Status && m_AutoGrow )
-  {
-    Grow();
-  }
-}
-
-template< typename value_T >
-void MojoArray< value_T >::AutoShrink()
-{
-  if( !m_Status && m_AutoShrink )
-  {
-    Shrink();
-  }
+  return kMojoStatus_Ok;
 }
 
 template< typename value_T >
@@ -636,7 +685,7 @@ bool MojoArray< value_T >::Contains( const value_T& value ) const
 }
 
 template< typename value_T >
-void MojoArray< value_T >::Enumerate( const MojoCollector< value_T >& push,
+void MojoArray< value_T >::Enumerate( const MojoCollector< value_T >& collector,
                                      const MojoAbstractSet< value_T >* limit ) const
 {
   if( limit )
@@ -646,7 +695,7 @@ void MojoArray< value_T >::Enumerate( const MojoCollector< value_T >& push,
       value_T value = GetAt( i );
       if( limit->Contains( value ) )
       {
-        push.Push( value );
+        collector.Push( value );
       }
     }
   }
@@ -654,7 +703,7 @@ void MojoArray< value_T >::Enumerate( const MojoCollector< value_T >& push,
   {
     for( int i = 0; i < m_ActiveCount; ++i )
     {
-      push.Push( GetAt( i ) );
+      collector.Push( GetAt( i ) );
     }
   }
 }
@@ -671,3 +720,4 @@ int MojoArray< value_T >::_GetChangeCount() const
   return m_ChangeCount;
 }
 
+// ---------------------------------------------------------------------------------------------------------------

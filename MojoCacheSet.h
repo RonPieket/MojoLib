@@ -5,24 +5,27 @@
  
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
  following conditions are met:
- - Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- disclaimer in the documentation and/or other materials provided with the distribution.
+ - Redistributions of source code must retain the above copyright notice, this list of conditions and the
+ following disclaimer.
+ - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+ following disclaimer in the documentation and/or other materials provided with the distribution.
  
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
- INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
  \file
  \author Ron Pieket \n<http://www.ItShouldJustWorkTM.com> \n<http://twitter.com/RonPieket>
  */
-/* MojoLib is documented at: http://www.itshouldjustworktm.com/mojolib/ */
+/* MojoLib is documented at: http://www.ItShouldJustWorkTM.com/mojolib/ */
+
+// ---------------------------------------------------------------------------------------------------------------
+
 #pragma once
 
 #include "MojoAbstractSet.h"
@@ -35,9 +38,9 @@ struct MojoConfig;
 /**
  \class MojoCacheSet
  \ingroup group_set_common
- Designed for optimization of set expressions. Normally, a set expression is evaluated when Contains() or Enumerate() is
- called. The result is not stored, but returned to the caller. This ensures that Contains() and Enumerate() always
- return results based on the current state of the containers at the expression leaves.
+ Designed for optimization of set expressions. Normally, a set expression is evaluated when Contains() or
+ Enumerate() is called. The result is not stored, but returned to the caller. This ensures that Contains() and
+ Enumerate() always return results based on the current state of the containers at the expression leaves.
  MojoLib tries to optimize evaluation in several ways. However, if you have an expression or sub-expression that:
  - is complex, and
  - is frequently accessed, and
@@ -45,8 +48,8 @@ struct MojoConfig;
 
  ...then this on-demand evaluation scheme will cause some unnecessary processing and memory access. *If* this is a
  concern, MojoCacheSet can help. A cache set is initialized with a pointer to a set to be cached. When \ref
- MojoCacheSet::Update() is called, it will enumerate the input set into its internal set. This internal set is used when
- the MojoCacheSet is accessed through Contains() and Enumerate().
+ MojoCacheSet::Update() is called, it will enumerate the input set into its internal set. This internal set is
+ used when the MojoCacheSet is accessed through Contains() and Enumerate().
  */
 template< typename key_T >
 class MojoCacheSet final : public MojoAbstractSet< key_T >
@@ -60,10 +63,10 @@ public:
    Initializing constructor. No need to call Create().
    \param[in] name The name of the set. Will also be used for internal memory allocation.
    \param[in] set_to_cache Pointer to the set we're caching here.
-   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig for
-   details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc for
-   details on how to set the global default.
+   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
+   for details on how to set a global default.
+   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the set will use for storage. If specified, no memory
    allocation will be used.
    \param[in] fixed_array_count Number of entries in the array.
@@ -79,10 +82,10 @@ public:
    Create after default constructor or Destroy().
    \param[in] name The name of the set. Will also be used for internal memory allocation.
    \param[in] set_to_cache Pointer to the set we're caching here.
-   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig for
-   details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc for
-   details on how to set the global default.
+   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
+   for details on how to set a global default.
+   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the set will use for storage. If specified, no memory
    allocation will be used.
    \param[in] fixed_array_count Number of entries in the array.
@@ -137,6 +140,9 @@ private:
   void                            Init();
 };
 
+// ---------------------------------------------------------------------------------------------------------------
+// Inline implementations
+
 template< typename key_T >
 MojoStatus MojoCacheSet< key_T >::Create( const char* name, MojoAbstractSet< key_T >* set_to_cache,
                                         const MojoConfig* config, MojoAlloc* alloc, key_T* fixed_array,
@@ -179,7 +185,7 @@ void MojoCacheSet< key_T >::Update()
   if( m_ChangeCount != change_count )
   {
     m_ChangeCount = change_count;
-    m_CachedSet.Reset();
+    m_CachedSet.Clear();
     m_SetToCache->Enumerate( MojoSetCollector< key_T >( &m_CachedSet ) );
   }
 }
@@ -213,3 +219,4 @@ void MojoCacheSet< key_T >::Init()
 {
 }
 
+// ---------------------------------------------------------------------------------------------------------------

@@ -5,27 +5,28 @@
  
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
  following conditions are met:
- - Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- disclaimer in the documentation and/or other materials provided with the distribution.
+ - Redistributions of source code must retain the above copyright notice, this list of conditions and the
+ following disclaimer.
+ - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+ following disclaimer in the documentation and/or other materials provided with the distribution.
  
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
- INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
  \file
  \author Ron Pieket \n<http://www.ItShouldJustWorkTM.com> \n<http://twitter.com/RonPieket>
  */
-/* MojoLib is documented at: http://www.itshouldjustworktm.com/mojolib/ */
+/* MojoLib is documented at: http://www.ItShouldJustWorkTM.com/mojolib/ */
+
+// ---------------------------------------------------------------------------------------------------------------
 
 #pragma once
-
 
 // -- Standard Libs
 #include <stdint.h>
@@ -39,8 +40,9 @@
 /**
  \ingroup group_util
  A modified FNV-1a algorithm.
- The modification consists of the processing of an additional '~' character at the end of the string. This improves
- distribution of series of strings that only differ by their last character, such as "string1", "string2".
+ The modification consists of the processing of an additional '~' character at the end of the string. This
+ improves distribution of series of strings that only differ by their last character, such as "string1",
+ "string2".
  <br>Also, the function returns zero if the input pointer is NULL or the length is 0.
  \param s The zero terminated string to hash.
  \return A hash value.
@@ -49,8 +51,9 @@ uint32_t MojoFnv32( const char* s );
 /**
  \ingroup group_util
  A modified FNV-1a algorithm.
- The modification consists of the processing of an additional '~' character at the end of the string. This improves
- distribution of series of strings that only differ by their last character, such as "string1", "string2".
+ The modification consists of the processing of an additional '~' character at the end of the string. This
+ improves distribution of series of strings that only differ by their last character, such as "string1",
+ "string2".
  <br>Also, the function returns zero if the input pointer is NULL or the length is 0.
  \param s The string to hash.
  \param count The number of characters.
@@ -60,8 +63,9 @@ uint32_t MojoFnv32( const char* s, int count );
 /**
  \ingroup group_util
  A modified FNV-1a algorithm.
- The modification consists of the processing of an additional '~' character at the end of the string. This improves
- distribution of series of strings that only differ by their last character, such as "string1", "string2".
+ The modification consists of the processing of an additional '~' character at the end of the string. This
+ improves distribution of series of strings that only differ by their last character, such as "string1",
+ "string2".
  <br>Also, the function returns zero if the input pointer is NULL or the length is 0.
  \param s The zero terminated string to hash.
  \return A hash value.
@@ -70,8 +74,9 @@ uint64_t MojoFnv64( const char* s );
 /**
  \ingroup group_util
  A modified FNV-1a algorithm.
- The modification consists of the processing of an additional '~' character at the end of the string. This improves
- distribution of series of strings that only differ by their last character, such as "string1", "string2".
+ The modification consists of the processing of an additional '~' character at the end of the string. This
+ improves distribution of series of strings that only differ by their last character, such as "string1",
+ "string2".
  <br>Also, the function returns zero if the input pointer is NULL or the length is 0.
  \param s The string to hash.
  \param count The number of characters.
@@ -81,7 +86,8 @@ uint64_t MojoFnv64( const char* s, int count );
 
 /**
  \ingroup group_util
- Substitute for std::max. Something in the libraries we use here at Insomniac causes a compile status if I use std::max
+ Substitute for std::max. Something in the libraries we use here at Insomniac causes a compile status if I use
+ std::max
  \param[in] a First value
  \param[in] b Second value
  \return The larger of a and b.
@@ -101,9 +107,9 @@ T MojoMin( const T& a, const T& b ) { return a <= b ? a : b; }
 
 /**
  \ingroup group_util
- Template to use an integer type directly as a hash code. The hash code must be well-distributed. Random numbers are
- good hash codes, and so are hashes generated by a FNV or CRC algorithm. MojoMap and MojoSet will use the value as-is
- and index the hash table with the key value.
+ Template to use an integer type directly as a hash code. The hash code must be well-distributed. Random numbers
+ are good hash codes, and so are hashes generated by a FNV or CRC algorithm. MojoMap and MojoSet will use the
+ value as-is and index the hash table with the key value.
  \note Value 0 is reserved and means Null. This marks an empty slot in the hash table.
  */
 template< typename T >
@@ -171,8 +177,8 @@ private:
 
 /**
  \ingroup group_util
- Template to use an integer type indirectly as a hash code. No assumptions are made about suitability for use as a hash
- code. Use this template if you have an integer identifier that is not well-distributed, such as an index.
+ Template to use an integer type indirectly as a hash code. No assumptions are made about suitability for use as a
+ hash code. Use this template if you have an integer identifier that is not well-distributed, such as an index.
  The template will compute a hash code by applying a modified FNV-1A algorithm.
  This, of course, incurs more processing overhead than the MojoHash template, which does no processing at all.
  \note Value 0 is reserved and means Null. This marks an empty slot in the hash table.
@@ -243,8 +249,8 @@ private:
 /**
  \ingroup group_util
  Template to use a C-string as hash code. The template will compute a hash code by applying a modified FNV-1A
- algorithm. This incurs some processing overhead, especially for long strings. You may want to consider using MojoId
- if you want to index your hash tables with strings.
+ algorithm. This incurs some processing overhead, especially for long strings. You may want to consider using
+ MojoId if you want to index your hash tables with strings.
  \note A NULL pointer is considered a Null hash code, and is used to mark empty slots in the hash table.
  \warning C-string must NOT be the empty string: "".
  */
@@ -309,3 +315,5 @@ public:
 private:
   const char* m_Key;
 };
+
+// ---------------------------------------------------------------------------------------------------------------

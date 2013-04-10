@@ -5,31 +5,36 @@
  
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
  following conditions are met:
- - Redistributions of source code must retain the above copyright notice, this list of conditions and the following
- disclaimer.
- - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following
- disclaimer in the documentation and/or other materials provided with the distribution.
+ - Redistributions of source code must retain the above copyright notice, this list of conditions and the
+ following disclaimer.
+ - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+ following disclaimer in the documentation and/or other materials provided with the distribution.
  
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
- INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
  \file
  \author Ron Pieket \n<http://www.ItShouldJustWorkTM.com> \n<http://twitter.com/RonPieket>
  */
-/* MojoLib is documented at: http://www.itshouldjustworktm.com/mojolib/ */
+/* MojoLib is documented at: http://www.ItShouldJustWorkTM.com/mojolib/ */
+
+// ---------------------------------------------------------------------------------------------------------------
+
 #pragma once
 
 // -- Standard Libs
 #include <stdint.h>
+#include <assert.h>
 #include <new>
 
 // -- Mojo
+#include "MojoConstants.h"
 #include "MojoStatus.h"
 #include "MojoAlloc.h"
 #include "MojoConfig.h"
@@ -62,10 +67,10 @@ public:
   /**
    Initializing constructor. No need to call Create().
    \param[in] name The name of the set. Will also be used for internal memory allocation.
-   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig for
-   details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc for
-   details on how to set the global default.
+   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
+   for details on how to set a global default.
+   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the set will use for storage. If specified, no memory
    allocation will be used.
    \param[in] fixed_array_count Number of entries in the array.
@@ -80,10 +85,10 @@ public:
   /**
    Create after default constructor or Destroy().
    \param[in] name The name of the set. Will also be used for internal memory allocation.
-   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig for
-   details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc for
-   details on how to set the global default.
+   \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
+   for details on how to set a global default.
+   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the set will use for storage. If specified, no memory
    allocation will be used.
    \param[in] fixed_array_count Number of entries in the array.
@@ -100,7 +105,7 @@ public:
   /**
    Remove all the leys.
    */
-  void Reset();
+  MojoStatus Clear();
   
   /**
    Insert key into set. If key already exists in set, does nothing.
@@ -120,13 +125,6 @@ public:
   virtual bool Contains( const key_T& key ) const override;
 
   /**
-   Update table sizes, if needed. This is only useful if the config specified no dynamic memory allocation. If dynamic
-   memory allocation is allowed, tables are resized as needed during Insert() or Remove(), and Update() is unnecessary.
-   \return Status code.
-   */
-  MojoStatus Update();
-  
-  /**
    Return table status state. This is the only way to find out if something went wrong in the default constructor.
    If Create() was used, the returned status code will be the same.
    \return Status code.
@@ -144,8 +142,8 @@ public:
   const char* GetName() const { return m_Name; }
 
   /**
-   Get index of first occupied slot in table. This is used for the ForEach... macros. It must be declared public to
-   work with the macros, but should be considered private.
+   Get index of first occupied slot in table. This is used for the ForEach... macros. It must be declared public
+   to work with the macros, but should be considered private.
    \private
    */
   int _GetFirstIndex() const;
@@ -158,8 +156,8 @@ public:
   int _GetNextIndex( int index ) const;
 
   /**
-   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work with
-   the macros, but should be considered private.
+   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work
+   with the macros, but should be considered private.
    \private
    */
   bool _IsIndexValid( int index ) const;
@@ -184,36 +182,30 @@ private:
 
   MojoAlloc*          m_Alloc;
   const char*         m_Name;
-  key_T*              m_Keys;
-  int                 m_ActiveCount;    // Number of key/values in play
-  int                 m_AllocCount;     // Entries allocated
+  key_T*              m_Buffer;
+  int                 m_BufferCount;     // Entries allocated
+  int                 m_ActiveCount;    // Number of key/values assigned
   int                 m_TableCount;     // Portion of the array currently used for hash table
   int                 m_ChangeCount;
-  MojoStatus           m_Status;
-  
-  int                 m_AllocCountMin;
-  int                 m_TableCountMin;
-  int                 m_GrowThreshold;
-  int                 m_ShrinkThreshold;
-  bool                m_AutoGrow;
-  bool                m_AutoShrink;
-  bool                m_DynamicAlloc;
+  MojoStatus          m_Status;
+  MojoConfig          m_Config;
   
   void Init();
-  void Grow();
-  void Shrink();
-  void AutoGrow();
-  void AutoShrink();
-  void Resize( int new_table_count, int new_capacity );
   int FindEmptyOrMatching( const key_T& key ) const;
   int FindEmpty( const key_T& key ) const;
   void Reinsert( int index );
   bool RemoveOne( const key_T& key );
   
-  void Destruct( key_T* table, int count );
-  void Construct( key_T* table, int count );
+  MojoStatus Shrink();
+  MojoStatus Grow();
+  MojoStatus Resize( int new_table_count );
+  void ResizeTableInPlace( int old_table_count );
+  void CopyTable( key_T* old_table, int old_table_count );
+  key_T* AllocAndConstruct( int new_buffer_count );
+  void DestructAndFree( key_T* old_buffer, int old_buffer_count );
 };
-// ---------------------------------------------------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------------------------------------------
 // Inline implementations
 
 /**
@@ -244,9 +236,9 @@ void MojoSet< key_T >::Init()
 {
   m_Alloc = NULL;
   m_Name = NULL;
-  m_Keys = NULL;
+  m_Buffer = NULL;
   m_TableCount = 0;
-  m_AllocCount = 0;
+  m_BufferCount = 0;
   m_ActiveCount = 0;
   m_ChangeCount = 0;
   m_Status = kMojoStatus_NotInitialized;
@@ -274,39 +266,34 @@ MojoStatus MojoSet< key_T >::Create( const char* name, const MojoConfig* config,
   {
     m_Status = kMojoStatus_DoubleInitialized;
   }
-  else if( config->m_AllocCountMin <= 1
-          || config->m_TableCountMin <= 1
-          || config->m_GrowThreshold <= config->m_ShrinkThreshold * 2 )
+  else if( config->m_BufferMinCount < kMojoTableMinCount )
   {
     m_Status = kMojoStatus_InvalidArguments;
   }
   else
   {
-    m_Status = kMojoStatus_Ok;
-    
-    m_Alloc           = fixed_array ? NULL : alloc;
     m_Name            = name;
-    m_Keys            = fixed_array;
-    m_AllocCount      = fixed_array_count;
-    m_ActiveCount     = 0;
-    
-    m_AllocCountMin   = config->m_AllocCountMin;
-    m_TableCountMin   = config->m_TableCountMin;
-    m_GrowThreshold   = config->m_GrowThreshold;
-    m_ShrinkThreshold = config->m_ShrinkThreshold;
-    m_AutoGrow        = config->m_AutoGrow;
-    m_AutoShrink      = config->m_AutoShrink;
-    m_DynamicAlloc    = config->m_DynamicAlloc && m_Alloc;
-    
-    if( !m_Keys )
+    m_Alloc           = alloc;
+    m_Config          = *config;
+
+    if( fixed_array_count )
     {
-      Resize( m_TableCountMin, MojoMax( m_AllocCountMin, m_TableCountMin ) );
+      m_Config.m_DynamicAlloc = false;
+      m_Config.m_BufferMinCount = fixed_array_count;
+      m_Alloc                 = NULL; // Destroy relies on this to not free memory.
+
+      m_Buffer                = fixed_array;
+      m_BufferCount           = fixed_array_count;
+      // Note to self: fixed array is assumed to consist of constructed values. Don't call Construct() here.
     }
-    
-    if( !m_Keys )
+    else
     {
-      m_Status = kMojoStatus_CouldNotAlloc;
+      m_BufferCount           = m_Config.m_BufferMinCount;
+      m_Buffer                = AllocAndConstruct( m_BufferCount );
+      m_TableCount            = m_Config.m_DynamicTable ? kMojoTableMinCount : m_BufferCount;
     }
+
+    m_Status = m_Buffer ? kMojoStatus_Ok : kMojoStatus_CouldNotAlloc;
   }
   return m_Status;
 }
@@ -320,20 +307,23 @@ MojoSet< key_T >::~MojoSet()
 template< typename key_T >
 void MojoSet< key_T >::Destroy()
 {
-  Resize( 0, 0 );
+  if( m_Alloc )
+  {
+    DestructAndFree( m_Buffer, m_BufferCount );
+  }
   Init();
 }
 
 template< typename key_T >
-void MojoSet< key_T >::Reset()
+MojoStatus MojoSet< key_T >::Clear()
 {
   for( int i = 0; i < m_TableCount; ++i )
   {
-    m_Keys[ i ] = key_T();
+    m_Buffer[ i ] = key_T();
   }
   m_ActiveCount = 0;
   m_ChangeCount += 1;
-  Resize( m_TableCountMin, MojoMax( m_AllocCountMin, m_TableCountMin ) );
+  return Resize( m_Config.m_BufferMinCount );
 }
 
 template< typename key_T >
@@ -348,21 +338,16 @@ MojoStatus MojoSet< key_T >::Insert( const key_T& key )
     }
     else
     {
-      AutoGrow();
-      
-      if( m_ActiveCount < m_TableCount )
+      status = Grow();
+      if( !status )
       {
         int index = FindEmptyOrMatching( key );
-        if( m_Keys[ index ].IsHashNull() )
+        if( m_Buffer[ index ].IsHashNull() )
         {
-          m_Keys[ index ] = key;
+          m_Buffer[ index ] = key;
           m_ActiveCount += 1;
           m_ChangeCount += 1;
         }
-      }
-      else
-      {
-        status = kMojoStatus_CouldNotAlloc;
       }
     }
   }
@@ -381,23 +366,11 @@ MojoStatus MojoSet< key_T >::Remove( const key_T& key )
     if( RemoveOne( key ) )
     {
       m_ChangeCount += 1;
-      AutoShrink();
+      Shrink();
       return kMojoStatus_Ok;
     }
   }
   return kMojoStatus_NotFound;
-}
-
-template< typename key_T >
-MojoStatus MojoSet< key_T >::Update()
-{
-  MojoStatus status = m_Status;
-  if( !m_Status )
-  {
-    Grow();
-    Shrink();
-  }
-  return status;
 }
 
 template< typename key_T >
@@ -406,7 +379,7 @@ bool MojoSet< key_T >::Contains( const key_T& key ) const
   if( !m_Status && !key.IsHashNull() )
   {
     int index = FindEmptyOrMatching( key );
-    return !m_Keys[ index ].IsHashNull();
+    return !m_Buffer[ index ].IsHashNull();
   }
   return false;
 }
@@ -428,7 +401,7 @@ int MojoSet< key_T >::_GetNextIndex( int index ) const
 {
   for( int i = index + 1; i < m_TableCount; ++i )
   {
-    if( !m_Keys[ i ].IsHashNull() )
+    if( !m_Buffer[ i ].IsHashNull() )
     {
       return i;
     }
@@ -445,107 +418,124 @@ bool MojoSet< key_T >::_IsIndexValid( int index ) const
 template< typename key_T >
 key_T MojoSet< key_T >::_GetKeyAt( int index ) const
 {
-  return m_Keys[ index ];
+  return m_Buffer[ index ];
 }
 
 template< typename key_T >
-void MojoSet< key_T >::Destruct( key_T* table, int count )
+key_T* MojoSet< key_T >::AllocAndConstruct( int new_buffer_count )
 {
-  for( int i = 0; i < count; ++i )
+  key_T* new_buffer = ( key_T* )m_Alloc->Allocate( new_buffer_count * sizeof( key_T ), m_Name );
+  if( new_buffer )
   {
-    table[ i ].~key_T();
+    for( int i = 0; i < new_buffer_count; ++i )
+    {
+      new( new_buffer + i ) key_T();
+    }
+  }
+  return new_buffer;
+}
+
+template< typename key_T >
+void MojoSet< key_T >::DestructAndFree( key_T* old_buffer, int old_buffer_count )
+{
+  if( old_buffer )
+  {
+    for( int i = 0; i < old_buffer_count; ++i )
+    {
+      old_buffer[ i ].~key_T();
+    }
+    m_Alloc->Free( old_buffer );
   }
 }
 
 template< typename key_T >
-void MojoSet< key_T >::Construct( key_T* table, int count )
+void MojoSet< key_T >::ResizeTableInPlace( int old_table_count )
 {
-  for( int i = 0; i < count; ++i )
+  if( m_TableCount != old_table_count )
   {
-    new( table + i ) key_T();
-  }
-}
-
-template< typename key_T >
-void MojoSet< key_T >::Resize( int new_table_count, int new_capacity )
-{
-  if( m_Alloc && m_AllocCount != new_capacity )
-  {
-    key_T* old_keys = m_Keys;
-    int old_alloc_count = m_AllocCount;
-    int old_table_count = m_TableCount;
-    
-    // Allocate some new memory
-    m_AllocCount = new_capacity;
-    m_TableCount = new_table_count;
-    m_ActiveCount = 0;
-    if( m_AllocCount )
-    {
-      m_Keys = ( key_T* )m_Alloc->Allocate( m_AllocCount * sizeof( key_T ), m_Name );
-      Construct( m_Keys, m_AllocCount );
-    }
-    else
-    {
-      m_Keys = NULL;
-    }
-    
-    if( old_keys && m_Keys )
-    {
-      for( int i = 0; i < old_table_count; ++i )
-      {
-        if( !old_keys[ i ].IsHashNull() )
-        {
-          Insert( old_keys[ i ] );
-        }
-      }
-    }
-    
-    if( old_keys )
-    {
-      Destruct( old_keys, old_alloc_count );
-      m_Alloc->Free( old_keys );
-    }
-  }
-  else if( new_table_count < m_TableCount )
-  {
-    // Shrink table in place
-    int old_table_count = m_TableCount;
-    m_TableCount = new_table_count;
-    
     for( int i = 0; i < old_table_count; ++i )
     {
-      if( !m_Keys[ i ].IsHashNull() )
+      if( !m_Buffer[ i ].IsHashNull() )
       {
         Reinsert( i );
       }
     }
-  }
-  else if( new_table_count > m_TableCount )
-  {
-    // Grow table in place
-    int old_table_count = m_TableCount;
-    m_TableCount = new_table_count;
-    
-    for( int i = 0; i < old_table_count; ++i )
+    for( int i = old_table_count; i < m_TableCount; ++i )
     {
-      if( !m_Keys[ i ].IsHashNull() )
+      if( !m_Buffer[ i ].IsHashNull() )
       {
         Reinsert( i );
       }
-    }
-    
-    // Need to fix up the beginning of the new part of the table. It may contain keys that were bumped due to a
-    // collision during the Grow operation
-    for( int i = old_table_count; i < new_table_count; ++i )
-    {
-      if( m_Keys[ i ].IsHashNull() )
+      else
       {
-        // We can stop if we reach an empty slot.
         break;
       }
-      Reinsert( i );
     }
   }
+}
+
+template< typename key_T >
+void MojoSet< key_T >::CopyTable( key_T* old_table, int old_table_count )
+{
+  for( int i = 0; i < old_table_count; ++i )
+  {
+    if( !old_table[ i ].IsHashNull() )
+    {
+      Insert( old_table[ i ] );
+    }
+  }
+}
+
+template< typename key_T >
+MojoStatus MojoSet< key_T >::Resize( int new_table_count )
+{
+  if( m_Status )
+  {
+    return m_Status;
+  }
+
+  bool must_realloc = ( new_table_count > m_BufferCount ) ||
+                      ( m_BufferCount > m_Config.m_BufferMinCount && m_Config.m_DynamicAlloc );
+
+  if( must_realloc )
+  {
+    // Allocate new buffer, copy data over.
+    if( !m_Config.m_DynamicAlloc || !m_Config.m_DynamicTable )
+    {
+      return kMojoStatus_CouldNotAlloc;
+    }
+
+    key_T* new_buffer = AllocAndConstruct( new_table_count );
+
+    if( !new_buffer )
+    {
+      return kMojoStatus_CouldNotAlloc;
+    }
+    
+    // Copy old table into new location.
+    int old_table_count = m_TableCount;
+    key_T* old_buffer = m_Buffer;
+
+    m_TableCount = new_table_count;
+    m_BufferCount = new_table_count;
+    m_Buffer = new_buffer;
+    m_ActiveCount = 0;
+    CopyTable( old_buffer, old_table_count );
+    DestructAndFree( old_buffer, old_table_count );
+  }
+  else
+  {
+    // Assert explanation: if m_DynamicTable is false, m_BufferCount anf m_TableCount will have been initialized
+    // to m_BufferMinCount. So if we want to grow, must_realloc would have been set and we don't get to resize in
+    // place. If we want to shrink, the Shrink() function would have tested and not even called Resize()
+    assert( m_Config.m_DynamicTable );
+    
+    // No reallocation. Resize in place.
+    int old_table_count = m_TableCount;
+    m_TableCount = new_table_count;
+    ResizeTableInPlace( old_table_count );
+  }
+  return  kMojoStatus_Ok;
 }
 
 template< typename key_T >
@@ -556,7 +546,7 @@ int MojoSet< key_T >::FindEmptyOrMatching( const key_T& key ) const
   // Look forward to the end of the key array
   for( int i = start_index; i < m_TableCount; ++i )
   {
-    if( m_Keys[ i ].IsHashNull() || m_Keys[ i ] == key )
+    if( m_Buffer[ i ].IsHashNull() || m_Buffer[ i ] == key )
     {
       return i;
     }
@@ -565,7 +555,7 @@ int MojoSet< key_T >::FindEmptyOrMatching( const key_T& key ) const
   // If not found, wrap around to the start
   for( int i = 0; i < start_index; ++i )
   {
-    if( m_Keys[ i ].IsHashNull() || m_Keys[ i ] == key )
+    if( m_Buffer[ i ].IsHashNull() || m_Buffer[ i ] == key )
     {
       return i;
     }
@@ -582,7 +572,7 @@ int MojoSet< key_T >::FindEmpty( const key_T& key ) const
   // Look forward to the end of the key array
   for( int i = start_index; i < m_TableCount; ++i )
   {
-    if( m_Keys[ i ].IsHashNull() )
+    if( m_Buffer[ i ].IsHashNull() )
     {
       return i;
     }
@@ -591,7 +581,7 @@ int MojoSet< key_T >::FindEmpty( const key_T& key ) const
   // If not found, wrap around to the start
   for( int i = 0; i < start_index; ++i )
   {
-    if( m_Keys[ i ].IsHashNull() )
+    if( m_Buffer[ i ].IsHashNull() )
     {
       return i;
     }
@@ -604,14 +594,14 @@ template< typename key_T >
 void MojoSet< key_T >::Reinsert( int index )
 {
   // Only move the entry if it is in the wrong place (due to collision)
-  int new_index = FindEmptyOrMatching( m_Keys[ index ] );
+  int new_index = FindEmptyOrMatching( m_Buffer[ index ] );
   if( new_index != index )
   {
     // Occupy new location
-    m_Keys[ new_index ] = m_Keys[ index ];
+    m_Buffer[ new_index ] = m_Buffer[ index ];
     
     // Vacate old location
-    m_Keys[ index ] = key_T();
+    m_Buffer[ index ] = key_T();
   }
 }
 
@@ -624,20 +614,20 @@ bool MojoSet< key_T >::RemoveOne( const key_T& key )
   }
   
   int index = FindEmptyOrMatching( key );
-  if( m_Keys[ index ].IsHashNull() )
+  if( m_Buffer[ index ].IsHashNull() )
   {
     return false;
   }
   else
   {
     // Clear the slot
-    m_Keys[ index ] = key_T();
+    m_Buffer[ index ] = key_T();
     m_ActiveCount--;
     
     // Now fix up entries after this, that may have landed there after a hash collision.
     for( int i = index + 1; i < m_TableCount; ++i )
     {
-      if( m_Keys[ i ].IsHashNull() )
+      if( m_Buffer[ i ].IsHashNull() )
       {
         return true;
       }
@@ -645,7 +635,7 @@ bool MojoSet< key_T >::RemoveOne( const key_T& key )
     }
     for( int i = 0; i < index; ++i )
     {
-      if( m_Keys[ i ].IsHashNull() )
+      if( m_Buffer[ i ].IsHashNull() )
       {
         return true;
       }
@@ -656,58 +646,37 @@ bool MojoSet< key_T >::RemoveOne( const key_T& key )
 }
 
 template< typename key_T >
-void MojoSet< key_T >::Grow()
+MojoStatus MojoSet< key_T >::Grow()
 {
   // Make more room if table is getting crowded
-  if( m_ActiveCount * 100 >= m_TableCount * m_GrowThreshold )
+  if( m_ActiveCount * 100 >= m_TableCount * kMojoTableGrowThreshold )
   {
-    int new_table_count = m_TableCount * 2;
-    int new_capacity = MojoMax( m_AllocCount, new_table_count );
-    if( !m_DynamicAlloc )
+    int new_size = m_TableCount * 2;
+    if( !m_Config.m_DynamicAlloc && m_TableCount < m_BufferCount )
     {
-      new_capacity = m_AllocCount;
-      new_table_count = MojoMin( new_table_count, new_capacity );
+      // Max out buffer before failing.
+      new_size = MojoMin( new_size, m_BufferCount );
     }
-    Resize( new_table_count, new_capacity );
+    return Resize( new_size );
   }
+  return kMojoStatus_Ok;
 }
 
 template< typename key_T >
-void MojoSet< key_T >::Shrink()
+MojoStatus MojoSet< key_T >::Shrink()
 {
   // Shrink if it's getting too empty
-  if( m_TableCount > m_TableCountMin && m_ActiveCount * 100 < m_TableCount * m_ShrinkThreshold )
+  if( m_Config.m_DynamicTable && m_TableCount > kMojoTableMinCount
+     && m_ActiveCount * 100 < m_TableCount * kMojoTableShrinkThreshold )
   {
-    int new_table_count = MojoMax( m_TableCount / 2, m_TableCountMin );
-    int new_capacity = MojoMax( new_table_count, m_AllocCountMin );
-    if( !m_DynamicAlloc )
-    {
-      new_capacity = m_AllocCount;
-    }
-    Resize( new_table_count, new_capacity );
+    return Resize( m_TableCount / 2 );
   }
+  return kMojoStatus_Ok;
 }
 
 template< typename key_T >
-void MojoSet< key_T >::AutoGrow()
-{
-  if( m_AutoGrow )
-  {
-    Grow();
-  }
-}
-
-template< typename key_T >
-void MojoSet< key_T >::AutoShrink()
-{
-  if( m_AutoShrink )
-  {
-    Shrink();
-  }
-}
-
-template< typename key_T >
-void MojoSet< key_T >::Enumerate( const MojoCollector< key_T >& collector, const MojoAbstractSet< key_T >* limit ) const
+void MojoSet< key_T >::Enumerate( const MojoCollector< key_T >& collector,
+                                 const MojoAbstractSet< key_T >* limit ) const
 {
   if( limit )
   {
@@ -741,6 +710,8 @@ int MojoSet< key_T >::_GetChangeCount() const
   return m_ChangeCount;
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+
 /**
  \ingroup group_container
  A macro to help you iterate over the keys in a hash table
@@ -753,3 +724,5 @@ int MojoSet< key_T >::_GetChangeCount() const
 for( int _i = ( container )._GetFirstIndex(); \
     ( container )._IsIndexValid( _i ) ? ( key_variable = ( container )._GetKeyAt( _i ), true ) : false; \
     _i = ( container )._GetNextIndex( _i ) )
+
+// ---------------------------------------------------------------------------------------------------------------
