@@ -273,7 +273,7 @@ MojoHash
 --------
 If your keys are unique integers and also well-distributed, for example ( 0xc94f1aa2, 0x278a827f, 0x18f12203 ), *and never zero*, the MojoHash wrapper template will endow it with the required members to be used as a key_T. The value you provide will be used as-is. Integer value 0 will be considered Null.
 
-The MojoHash wrapper template has an implicit constructor and a cast operator to make the wrapper nearly invisible, other than in the container declaration.
+The MojoHash wrapper template has an implicit constructor and a cast operator to make the use of the wrapper nearly invisible, other than in the container declaration.
 
 \code{.cpp}
 MojoSet< MojoHash< int > > set( "set" ); // Here you see it...
@@ -296,7 +296,7 @@ MojoHashable
 ------------
 If your keys are unique integers but not uniformly distributed, for example ( 1, 2, 3, 101, 102, 103 ), *and never zero*, the MojoHashable wrapper template will make it conform to the requirements for use as a key_T.
 
-The MojoHashable wrapper template also has an implicit constructor and a cast operator to make the wrapper nearly invisible.
+The MojoHashable wrapper template also has an implicit constructor and a cast operator to make the use of the wrapper nearly invisible.
 
 \code{.cpp}
 MojoSet< MojoHashable< int > > set( "set" ); // Here you see it...
@@ -319,7 +319,7 @@ MojoHashableCString
 -------------------
 If you don't want to use MojoId, but your keys are C-strings, the MojoHashableCString wrapper template can make that work. This will store the pointer to the string, not the string body itself. You must make sure that the string body is kept in memory until the key is removed. The C-string may not be empty or NULL.
 
-The MojoHashableCString wrapper template also has an implicit constructor and a cast operator to make the wrapper nearly invisible.
+The MojoHashableCString wrapper template also has an implicit constructor and a cast operator to make the use of the wrapper nearly invisible.
 
 ------------------------------------------------------------------------------------------------------------------------
 
