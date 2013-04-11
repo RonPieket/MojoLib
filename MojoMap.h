@@ -78,7 +78,7 @@ public:
    \param[in] not_found_value The value to return if nothing was found.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the map will use for storage. If specified, no memory
    allocation will be used.
@@ -97,7 +97,7 @@ public:
    \param[in] not_found_value The value to return if nothing was found.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the map will use for storage. If specified, no memory
    allocation will be used.

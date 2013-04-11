@@ -61,7 +61,7 @@ public:
    \param[in] not_found_value Value to be returned if index was out of range.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
    \param[in] fixed_array If dynamic memory allocation is not desired, specify an array of `value_T` to use.
    \param[in] fixed_array_count Size of `fixed_array`.
@@ -79,7 +79,7 @@ public:
    \param[in] not_found_value Value to be returned if index was out of range.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
    \param[in] fixed_array If dynamic memory allocation is not desired, specify an array of `value_T` to use.
    \param[in] fixed_array_count Size of `fixed_array`.

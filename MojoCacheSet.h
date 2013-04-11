@@ -65,7 +65,7 @@ public:
    \param[in] set_to_cache Pointer to the set we're caching here.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the set will use for storage. If specified, no memory
    allocation will be used.
@@ -84,7 +84,7 @@ public:
    \param[in] set_to_cache Pointer to the set we're caching here.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
    \param[in] fixed_array You may provide an array that the set will use for storage. If specified, no memory
    allocation will be used.

@@ -51,7 +51,7 @@ public:
    Call g_MojoIdManager.Create() once, at program initialization. Will make initial allocations.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
-   \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
+   \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
    */
   void Create( const MojoConfig* config = NULL, MojoAlloc* alloc = NULL );
