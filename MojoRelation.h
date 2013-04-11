@@ -64,7 +64,8 @@ public:
   /**
    Initializing constructor. No need to call Create().
    \param[in] name The name of the map. Will also be used for internal memory allocation.
-   \param[in] not_found_value The value to return if nothing was found.
+   \param[in] child_not_found_value The value to return if child was not found.
+   \param[in] parent_not_found_value The value to return if parent was not found.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
    \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
@@ -84,7 +85,8 @@ public:
   /**
    Create after default constructor or Destroy().
    \param[in] name The name of the map. Will also be used for internal memory allocation.
-   \param[in] not_found_value The value to return if nothing was found.
+   \param[in] child_not_found_value The value to return if child was not found.
+   \param[in] parent_not_found_value The value to return if parent was not found.
    \param[in] config Config to use. If omitted, the global default will be used. See documentation for MojoConfig
    for details on how to set a global default.
    \param[in] alloc Allocator to use. If omitted, the global defualt will be used. See documentation for MojoAlloc
