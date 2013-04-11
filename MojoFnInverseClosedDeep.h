@@ -34,7 +34,7 @@
 #include "MojoUtil.h"
 
 /** \cond HIDE_FORWARD_REFERENCE */
-template< typename key_T > class MojoRelation;
+template< typename child_key_T, typename parent_key_T > class MojoRelation;
 /** \endcond */
 
 /**
@@ -53,7 +53,7 @@ private:
   class Collector final : public MojoCollector< key_T >
   {
   public:
-    Collector( const MojoCollector< key_T >& collector, const MojoRelation< key_T >* relation,
+    Collector( const MojoCollector< key_T >& collector, const MojoRelation< key_T, key_T >* relation,
               const MojoAbstractSet< key_T >* limit )
     : m_Collector( collector )
     , m_Relation( relation )
@@ -86,7 +86,7 @@ private:
     }
   private:
     const MojoCollector< key_T >& m_Collector;
-    const MojoRelation< key_T >*  m_Relation;
+    const MojoRelation< key_T, key_T >*  m_Relation;
     const MojoAbstractSet< key_T >*     m_Limit;
   };
   
@@ -96,7 +96,7 @@ public:
    \param[in] relation The relation that defines the function.
    \param[in] set The set to be transformed by the function.
    */
-  MojoFnInverseClosedDeep( const MojoRelation< key_T>* relation, const MojoAbstractSet< key_T >* set )
+  MojoFnInverseClosedDeep( const MojoRelation< key_T, key_T >* relation, const MojoAbstractSet< key_T >* set )
   : m_Relation( relation )
   , m_Set( set )
   {}
@@ -135,7 +135,7 @@ public:
   
 private:
   
-  const MojoRelation< key_T >*  m_Relation;
+  const MojoRelation< key_T, key_T >*  m_Relation;
   const MojoAbstractSet< key_T >*     m_Set;
 };
 

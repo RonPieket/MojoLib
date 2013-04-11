@@ -523,7 +523,7 @@ static MojoId MakeId( const char* group, int number )
 
 REGISTER_UNIT_TEST( MojoRelationTest, Container )
 {
-  MojoRelation< MojoId > rel( "test" );
+  MojoRelation< MojoId, MojoId > rel( "test" );
 
   // For 0..49, insert consecutively
   for( char c = 'a'; c <= 'z'; ++c )
@@ -903,7 +903,7 @@ static const char* g_FuncTestInfo[ 8 ][ 5 ] =
 
 
 template<typename key_T >
-MojoAbstractSet< key_T >* MakeFn( int mode, const MojoRelation< key_T >* relation,
+MojoAbstractSet< key_T >* MakeFn( int mode, const MojoRelation< key_T, key_T >* relation,
                                  const MojoAbstractSet< key_T >* set )
 {
   switch( mode )
@@ -923,7 +923,7 @@ MojoAbstractSet< key_T >* MakeFn( int mode, const MojoRelation< key_T >* relatio
 
 REGISTER_UNIT_TEST( MojoFnTest, Function )
 {
-  MojoRelation< MojoHash< char > > relation( "parent-child" );
+  MojoRelation< MojoHash< char >, MojoHash< char > > relation( "parent-child" );
   
   relation.InsertChildParent( 'A', 'B' );
   relation.InsertChildParent( 'C', 'B' );
