@@ -26,8 +26,6 @@
 
 // ---------------------------------------------------------------------------------------------------------------
 
-/** \cond IGNORE_SOURCE_CODE */
-
 // -- Standard Libs
 #include <stdint.h>
 #include <stdio.h>
@@ -992,12 +990,10 @@ int main( int argc, const char** argv )
   error_count += UnitTest::Run();
   printf( "--------------------\n" );
   printf( "%d issue%s found\n", error_count, error_count == 1 ? "" : "s" );
-
+  
   g_MojoIdManager.Destroy();
 
   return error_count;
 }
-
-/** \endcond */
 
 // ---------------------------------------------------------------------------------------------------------------

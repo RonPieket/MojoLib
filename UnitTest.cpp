@@ -26,7 +26,6 @@
 
 // ---------------------------------------------------------------------------------------------------------------
 
-/** \cond IGNORE_SOURCE_CODE */
 // -- Self
 #include "UnitTest.h"
 
@@ -405,7 +404,5 @@ int RefCountedInt::s_InfoAssignedCount = 0;
 const char* RefCountedInt::s_InfoErrorMessage;
 
 bool RefCountedInt::s_UseAssert = false;
-
-/** \endcond */
 
 // ---------------------------------------------------------------------------------------------------------------

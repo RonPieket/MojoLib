@@ -1,4 +1,4 @@
-Introduction and Overview {#mainpage}
+Introduction and Overview{#mainpage}
 =========================
 MojoLib is a collection of algorithms that I developed for Insomniac's proprietary world editor. Its performance and memory behavior is quite configurable, and it should be a good fit in games as well as in tools. MojoLib's most important innovation is the implementation of \ref page_expression
 
@@ -242,6 +242,87 @@ For more details of how abstract sets are applied in the Insomniac world editor,
 
 ------------------------------------------------------------------------------------------------------------------------
 
+\page page_key_value key_T, value_T, and Hashability
+
+The template parameters of all of MojoLib's container class templates are named either key_T or value_T. Certain behavior is required of both types. Wrapper templates are provided to make native types and your own types suitable for either role. MojoId is ready for use as key_T as well as value_T.
+
+container     | key_T  | value_T
+:------------ | :----: | :-----:
+MojoSet       | ♦      | &nbsp;
+MojoMap       | ♦      | ♦
+MojoMultiMap  | ♦      | ♦
+MojoRelation  | ♦      | &nbsp;
+MojoArray     | &nbsp; | ♦
+
+key_T
+-----
+- must have a member named \link MojoHashable::GetHash() GetHash()\endlink that returns a uint64_t that is unique to the key and have uniform distribution. See [this Wikipedia article](http://en.wikipedia.org/wiki/Hash_code#Uniformity) for more explanation on hash uniformity;
+- have member named IsHashNull() that returns true if the key should be considered Null, blank, empty, returns false otherwise;
+- must have a default constructor that constructs a Null object - it will be used to fill the empty part of the hash table;
+- must have a reasonable == operator;
+- must have a reasonable copy constructor.
+
+value_T
+-------
+- must have a trivial or empty default constructor (content of default constructed object may be left uninitialized) - it will be used to fill the empty part of the hash table;
+- must have a reasonable == operator;
+- must have a reasonable copy constructor;
+- may be any native type, as well as any custom type that meets the above requirements.
+
+MojoHash
+--------
+If your keys are unique integers and also well-distributed, for example ( 0xc94f1aa2, 0x278a827f, 0x18f12203 ), *and never zero*, the MojoHash wrapper template will endow it with the required members to be used as a key_T. The value you provide will be used as-is. Integer value 0 will be considered Null.
+
+The MojoHash wrapper template has an implicit constructor and a cast operator to make the wrapper nearly invisible, other than in the container declaration.
+
+\code{.cpp}
+MojoSet< MojoHash< int > > set( "set" ); // Here you see it...
+int keys[ 6 ];
+for( int i = 0; i < 3; ++i )
+{
+  keys[ i ] = rand();
+  set.Insert( keys[ i ] );               // ...and here you don't
+}
+for( int i = 0; i < 3; ++i )
+{
+  printf( "%s ", set.Contains( keys[ i ] ) ? "yes" : "no" );
+}
+printf( "\n" );
+\endcode
+
+`yes yes yes`
+
+MojoHashable
+------------
+If your keys are unique integers but not uniformly distributed, for example ( 1, 2, 3, 101, 102, 103 ), *and never zero*, the MojoHashable wrapper template will make it conform to the requirements for use as a key_T.
+
+The MojoHashable wrapper template also has an implicit constructor and a cast operator to make the wrapper nearly invisible.
+
+\code{.cpp}
+MojoSet< MojoHashable< int > > set( "set" ); // Here you see it...
+for( int i = 0; i < 3; ++i )
+{
+  set.Insert( i );                           // ...and here you don't
+}
+for( int i = 0; i < 6; ++i )
+{
+  printf( "%s ", set.Contains( i ) ? "yes" : "no" );
+}
+printf( "\n" );
+\endcode
+
+`no yes yes no no no`
+
+\note Observe the first `no`: value 0 cannot be used as a key.
+
+MojoHashableCString
+-------------------
+If you don't want to use MojoId, but your keys are C-strings, the MojoHashableCString wrapper template can make that work. This will store the pointer to the string, not the string body itself. You must make sure that the string body is kept in memory until the key is removed. The C-string may not be empty or NULL.
+
+The MojoHashableCString wrapper template also has an implicit constructor and a cast operator to make the wrapper nearly invisible.
+
+------------------------------------------------------------------------------------------------------------------------
+
 \page page_configuration Configuration
 
 Hash Table Density
@@ -281,7 +362,7 @@ A hash table is stored in a buffer. The table may be smaller than the buffer, bu
 
 As noted above, MojoConfig::m_DynamicTable controls whether or not the table is resized dynamically. MojoConfig::m_DynamicAlloc controls whether the buffer can be resized. Resizing the *table* can be done without resizing the *buffer*, as long as the table size does not exceed the buffer size. Shrinking and growing the table within the buffer will improve lookup performance (by keeping the table dense, thus memory cache friendly), without calling out to the heap manager.
 
-\image html drinkme.png
+\image html drinkme.jpg
 
 ------------------------------------------------------------------------------------------------------------------------
 
