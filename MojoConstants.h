@@ -50,7 +50,7 @@ static const int kMojoBufferMinCount = 256;
  \ingroup group_config
  When population falls below this percentage, halve table size.
  */
-static const int kMojoTableShrinkThreshold = 30;
+static const int kMojoTableShrinkThreshold = 25;
 
 /**
  \ingroup group_config
