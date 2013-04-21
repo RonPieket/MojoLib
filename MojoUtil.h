@@ -40,53 +40,53 @@
 /**
  \ingroup group_util
  A modified FNV-1a algorithm.
- The modification consists of the processing of an additional '~' character at the end of the string. This
+ The modification consists of the processing of two additional '+' characters at the end of the string. This
  improves distribution of series of strings that only differ by their last character, such as "string1",
  "string2".
  <br>Also, the function returns zero if the input pointer is NULL or the length is 0.
  \param s The zero terminated string to hash.
- \return A hash value.
+ \return A hash code.
  */
 uint32_t MojoFnv32( const char* s );
 /**
  \ingroup group_util
  A modified FNV-1a algorithm.
- The modification consists of the processing of an additional '~' character at the end of the string. This
+ The modification consists of the processing of two additional '+' characters at the end of the string. This
  improves distribution of series of strings that only differ by their last character, such as "string1",
  "string2".
  <br>Also, the function returns zero if the input pointer is NULL or the length is 0.
  \param s The string to hash.
  \param count The number of characters.
- \return A hash value.
+ \return A hash code.
  */
 uint32_t MojoFnv32( const char* s, int count );
 /**
  \ingroup group_util
  A modified FNV-1a algorithm.
- The modification consists of the processing of an additional '~' character at the end of the string. This
+ The modification consists of the processing of two additional '+' characters at the end of the string. This
  improves distribution of series of strings that only differ by their last character, such as "string1",
  "string2".
  <br>Also, the function returns zero if the input pointer is NULL or the length is 0.
  \param s The zero terminated string to hash.
- \return A hash value.
+ \return A hash code.
  */
 uint64_t MojoFnv64( const char* s );
 /**
  \ingroup group_util
  A modified FNV-1a algorithm.
- The modification consists of the processing of an additional '~' character at the end of the string. This
+ The modification consists of the processing of two additional '+' characters at the end of the string. This
  improves distribution of series of strings that only differ by their last character, such as "string1",
  "string2".
  <br>Also, the function returns zero if the input pointer is NULL or the length is 0.
  \param s The string to hash.
  \param count The number of characters.
- \return A hash value.
+ \return A hash code.
  */
 uint64_t MojoFnv64( const char* s, int count );
 
 /**
  \ingroup group_util
- Substitute for std::max. Something in the libraries we use here at Insomniac causes a compile status if I use
+ Substitute for std::max. Something in the libraries we use here at Insomniac causes a compile error if I use
  std::max
  \param[in] a First value
  \param[in] b Second value
@@ -97,7 +97,7 @@ T MojoMax( const T& a, const T& b ) { return a > b ? a : b; }
 
 /**
  \ingroup group_util
- Substitute for std::min. Something in the libraries we use at Insomniac causes a compile status if I use std::min
+ Substitute for std::min. Something in the libraries we use at Insomniac causes a compile error if I use std::min
  \param[in] a First value
  \param[in] b Second value
  \return The smaller of a and b.
@@ -113,9 +113,10 @@ T MojoMin( const T& a, const T& b ) { return a <= b ? a : b; }
  
  The MojoHash wrapper template has an implicit constructor and a cast operator to make the wrapper nearly
  invisible, other than in the container declaration.
- 
+
  \code{.cpp}
  MojoSet< MojoHash< int > > set( "set" ); // Here you see it...
+
  int keys[ 6 ];
  for( int i = 0; i < 3; ++i )
  {
@@ -129,7 +130,7 @@ T MojoMin( const T& a, const T& b ) { return a <= b ? a : b; }
  printf( "\n" );
  \endcode
  
- `yes yes yes`
+ This will print: `yes yes yes`
  */
 template< typename T >
 class MojoHash
@@ -137,7 +138,7 @@ class MojoHash
 public:
   /**
    Default constructor will initialize a Null hash code
-   \note Hash table algorithm counts on this constructor to mark empty slots in hash table.
+   \note Hash table algorithm requires this constructor to mark empty slots in hash table.
    */
   MojoHash()
     : m_Key( 0 )
@@ -154,7 +155,7 @@ public:
    Test equality.
    \param[in] other Value to compare
    \return true if equal.
-   \note Hash table algorithm counts on this operator.
+   \note Hash table algorithm requires this operator.
    */
   bool operator== ( const MojoHash& other ) const
   {
@@ -172,7 +173,7 @@ public:
   /**
    Return the unaltered value.
    \return Same value as the object was initialized with.
-   \note Hash table algorithm counts on this function.
+   \note Hash table algorithm requires this function.
    */
   uint64_t GetHash() const
   {
@@ -183,7 +184,7 @@ public:
    Test for Null.
    Value 0 means Null, used to mark an empty slot in the hash table.
    \return true if Null.
-   \note Hash table algorithm counts on this function.
+   \note Hash table algorithm requires this function.
    */
   bool IsHashNull() const
   {
@@ -204,6 +205,7 @@ private:
  
  \code{.cpp}
  MojoSet< MojoHashable< int > > set( "set" ); // Here you see it...
+
  for( int i = 0; i < 3; ++i )
  {
    set.Insert( i );                           // ...and here you don't
@@ -215,7 +217,7 @@ private:
  printf( "\n" );
  \endcode
  
- `no yes yes no no no`
+ This will print: `no yes yes no no no`
  
  \note Observe the first `no`: value 0 cannot be used as a key.
  */
@@ -225,7 +227,7 @@ class MojoHashable
 public:
   /**
    Default constructor will initialize a Null hash code
-   \note Hash table algorithm counts on this constructor to mark empty slots in hash table.
+   \note Hash table algorithm requires this constructor to mark empty slots in hash table.
    */
   MojoHashable()
   : m_Key( 0 )
@@ -242,7 +244,7 @@ public:
    Test equality.
    \param[in] other Value to compare
    \return true if equal.
-   \note Hash table algorithm counts on this operator.
+   \note Hash table algorithm requires this operator.
    */
   bool operator== ( const MojoHashable& other ) const
   {
@@ -260,7 +262,7 @@ public:
   /**
    Compute hash code.
    \return MojoFnv64( &value, sizeof( value ) )
-   \note Hash table algorithm counts on this function.
+   \note Hash table algorithm requires this function.
    */
   uint64_t GetHash() const
   {
@@ -271,7 +273,7 @@ public:
    Test for Null.
    Value 0 means Null, used to mark an empty slot in the hash table.
    \return true if Null.
-   \note Hash table algorithm counts on this function.
+   \note Hash table algorithm requires this function.
    */
   bool IsHashNull() const
   {
@@ -290,13 +292,26 @@ private:
  
  The MojoHashableCString wrapper template also has an implicit constructor and a cast operator to make the wrapper
  nearly invisible.
+ 
+ \code{.cpp}
+ MojoSet< MojoHashableCString > set( "set" ); // Here you see it...
+
+ set.Insert( "one" );                         // ...and here you don't
+ set.Insert( "two" );
+ set.Insert( "three" );
+ printf( "%s ", set.Contains( "two" ) ? "yes" : "no" );
+ printf( "%s ", set.Contains( "four" ) ? "yes" : "no" );
+ printf( "%s ", set.Contains( "six" ) ? "yes" : "no" );
+ printf( "\n" );
+ \endcode
+ This will print: `yes no no`
  */
 class MojoHashableCString
 {
 public:
   /**
    Default constructor will initialize a Null hash code
-   \note Hash table algorithm counts on this constructor to mark empty slots in hash table.
+   \note Hash table algorithm requires this constructor to mark empty slots in hash table.
    */
   MojoHashableCString()
   : m_Key( NULL )
@@ -313,7 +328,7 @@ public:
    Test equality.
    \param[in] other Value to compare
    \return true if equal.
-   \note Hash table algorithm counts on this operator.
+   \note Hash table algorithm requires this operator.
    */
   bool operator== ( const MojoHashableCString& other ) const
   {
@@ -331,7 +346,7 @@ public:
   /**
    Compute hash code.
    \return MojoFnv64( value )
-   \note Hash table algorithm counts on this function.
+   \note Hash table algorithm requires this function.
    */
   uint64_t GetHash() const
   {
@@ -341,7 +356,7 @@ public:
   /**
    Test for Null.
    NULL means Null, used to mark an empty slot in the hash table.
-   \note Hash table algorithm counts on this function.
+   \note Hash table algorithm requires this function.
    \return true if Null.
    */
   bool IsHashNull() const

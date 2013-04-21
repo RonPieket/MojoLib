@@ -389,7 +389,7 @@ REGISTER_UNIT_TEST( MojoMapTest, Container )
   }
   EXPECT_INT( 0, RefCountedInt::s_InfoAssignedCount );
   EXPECT_INT( 0, map.GetCount() );
-  
+
   map.Destroy();
   EXPECT_INT( 1, RefCountedInt::s_InfoConstructedCount );
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
@@ -563,7 +563,7 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
       rel.RemoveChild( child );
     }
   }
-  
+
   // Now remove all parents above and including 'q'.
   for( char c = 'q'; c <= 'z'; ++c )
   {
@@ -990,7 +990,7 @@ int main( int argc, const char** argv )
   error_count += UnitTest::Run();
   printf( "--------------------\n" );
   printf( "%d issue%s found\n", error_count, error_count == 1 ? "" : "s" );
-  
+
   g_MojoIdManager.Destroy();
 
   return error_count;

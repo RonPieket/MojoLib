@@ -60,7 +60,8 @@ uint32_t MojoFnv32( const char* s )
   {
     hash = ( hash ^ c ) * kFnvPrimeU32;
   }
-  hash = ( hash ^ '~' ) * kFnvPrimeU32;
+  hash = ( hash ^ '+' ) * kFnvPrimeU32;
+  hash = ( hash ^ '+' ) * kFnvPrimeU32;
   return hash;
 }
 
@@ -75,7 +76,8 @@ uint32_t MojoFnv32( const char* s, int count )
   {
     hash = ( hash ^ s[ i ] ) * kFnvPrimeU32;
   }
-  hash = ( hash ^ '~' ) * kFnvPrimeU32;
+  hash = ( hash ^ '+' ) * kFnvPrimeU32;
+  hash = ( hash ^ '+' ) * kFnvPrimeU32;
   return hash;
 }
 
@@ -90,7 +92,8 @@ uint64_t MojoFnv64( const char* s )
   {
     hash = ( hash ^ c ) * kFnvPrimeU64;
   }
-  hash = ( hash ^ '~' ) * kFnvPrimeU64;
+  hash = ( hash ^ '+' ) * kFnvPrimeU64;
+  hash = ( hash ^ '+' ) * kFnvPrimeU64;
   return hash;
 }
 
@@ -105,7 +108,8 @@ uint64_t MojoFnv64( const char* s, int count )
   {
     hash = ( hash ^ s[ i ] ) * kFnvPrimeU64;
   }
-  hash = ( hash ^ '~' ) * kFnvPrimeU64;
+  hash = ( hash ^ '+' ) * kFnvPrimeU64;
+  hash = ( hash ^ '+' ) * kFnvPrimeU64;
   return hash;
 }
 

@@ -256,18 +256,20 @@ MojoArray     | &nbsp; | ♦
 
 key_T
 -----
-- must have a member named \link MojoHashable::GetHash() GetHash()\endlink that returns a uint64_t that is unique to the key and have uniform distribution. See [this Wikipedia article](http://en.wikipedia.org/wiki/Hash_code#Uniformity) for more explanation on hash uniformity;
-- have member named IsHashNull() that returns true if the key should be considered Null, blank, empty, returns false otherwise;
-- must have a default constructor that constructs a Null object - it will be used to fill the empty part of the hash table;
-- must have a reasonable == operator;
-- must have a reasonable copy constructor.
+- MUST have a member named \link MojoHashable::GetHash() GetHash()\endlink that returns a uint64_t that is unique to the key and have uniform distribution. See [this Wikipedia article](http://en.wikipedia.org/wiki/Hash_code#Uniformity) for more explanation on hash uniformity;
+- MUST have member named \link MojoHashable::IsHashNull() IsHashNull()\endlink that returns true if the key should be considered Null, blank, empty, returns false otherwise;
+- MUST have a default constructor that initializes a Null object - it will be used to fill the empty part of the hash table;
+- is RECOMMENDED to have a trivial default constructor - it will be used to fill the empty part of the hash table;
+- is RECOMMENDED to have an efficient == operator;
+- is RECOMMENDED to have an efficient copy constructor.
 
 value_T
 -------
-- must have a trivial or empty default constructor (content of default constructed object may be left uninitialized) - it will be used to fill the empty part of the hash table;
-- must have a reasonable == operator;
-- must have a reasonable copy constructor;
-- may be any native type, as well as any custom type that meets the above requirements.
+- MUST have a default constructor;
+- is RECOMMENDED to have a trivial or empty default constructor (content of default constructed object may be left uninitialized) - it will be used to fill the empty part of the hash table;
+- is RECOMMENDED to have an efficient == operator;
+- is RECOMMENDED to have an efficient copy constructor.
+- MAY be any native type, as well as any custom type that meets the above requirements.
 
 MojoHash
 --------
@@ -277,6 +279,7 @@ The MojoHash wrapper template has an implicit constructor and a cast operator to
 
 \code{.cpp}
 MojoSet< MojoHash< int > > set( "set" ); // Here you see it...
+
 int keys[ 6 ];
 for( int i = 0; i < 3; ++i )
 {
@@ -290,7 +293,7 @@ for( int i = 0; i < 3; ++i )
 printf( "\n" );
 \endcode
 
-`yes yes yes`
+This will print: `yes yes yes`
 
 MojoHashable
 ------------
@@ -300,6 +303,7 @@ The MojoHashable wrapper template also has an implicit constructor and a cast op
 
 \code{.cpp}
 MojoSet< MojoHashable< int > > set( "set" ); // Here you see it...
+
 for( int i = 0; i < 3; ++i )
 {
   set.Insert( i );                           // ...and here you don't
@@ -311,7 +315,7 @@ for( int i = 0; i < 6; ++i )
 printf( "\n" );
 \endcode
 
-`no yes yes no no no`
+This will print: `no yes yes no no no`
 
 \note Observe the first `no`: value 0 cannot be used as a key.
 
@@ -320,6 +324,20 @@ MojoHashableCString
 If you don't want to use MojoId, but your keys are C-strings, the MojoHashableCString wrapper template can make that work. This will store the pointer to the string, not the string body itself. You must make sure that the string body is kept in memory until the key is removed. The C-string may not be empty or NULL.
 
 The MojoHashableCString wrapper template also has an implicit constructor and a cast operator to make the use of the wrapper nearly invisible.
+
+\code{.cpp}
+MojoSet< MojoHashableCString > set( "set" ); // Here you see it...
+
+set.Insert( "one" );                         // ...and here you don't
+set.Insert( "two" );
+set.Insert( "three" );
+printf( "%s ", set.Contains( "two" )  ? "yes" : "no" );
+printf( "%s ", set.Contains( "four" ) ? "yes" : "no" );
+printf( "%s ", set.Contains( "six" )  ? "yes" : "no" );
+printf( "\n" );
+\endcode
+
+This will print: `yes no no`
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -381,7 +399,7 @@ Normally, a set expression is evaluated when Contains() or Enumerate() is called
 \defgroup group_container Containers
 \brief Containers allow insertion and removal of elements.
 
-MojoLib uses a linear probing hash table algorithm for all of its containers except the array. See [this Wikipedia article](http://en.wikipedia.org/wiki/Hash_table#Open_addressing) for a quick reminder. This was chosen and modified with cache performance in mind. See the \ref page_optimization page for the details.
+MojoLib uses a linear probing hash table algorithm for all of its containers except the array. See [this Wikipedia article](http://en.wikipedia.org/wiki/Hash_table#Open_addressing) for a quick reminder. This was chosen and modified with cache performance in mind. See the \ref page_configuration page for the details.
 
 ------------------------------------------------------------------------------------------------------------------------
 
