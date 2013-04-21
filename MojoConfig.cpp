@@ -43,8 +43,8 @@ MojoConfig::MojoConfig()
 MojoConfig::MojoConfig( bool )
 {
   m_BufferMinCount  = kMojoBufferMinCount;
-  m_DynamicAlloc  = true;
-  m_DynamicTable  = true;
+  m_DynamicAlloc    = true;
+  m_DynamicTable    = true;
 }
 
 const MojoConfig* MojoConfig::s_Default = NULL;

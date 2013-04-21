@@ -833,17 +833,39 @@ bool MojoMultiMap< key_T, value_T >::RemoveAll( const key_T& key )
     if( !m_Buffer[ index ].IsHashNull() )
     {
       int count = 0;
-      int i = index;
-      while( !m_Buffer[ i ].IsHashNull() )
+      bool stop = false;
+      for( int i = index; i < m_TableCount; ++i )
       {
+        if( m_Buffer[ i ].IsHashNull() )
+        {
+          stop = true;
+          break;
+        }
         if( m_Buffer[ i ].key == key )
         {
           m_Buffer[ i ] = KeyValue();
           m_ActiveCount--;
         }
         count += 1;
-        i = ( i + 1 ) % m_TableCount;
       }
+      if( !stop )
+      {
+        for( int i = 0; i < index; ++i )
+        {
+          if( m_Buffer[ i ].IsHashNull() )
+          {
+            stop = true;
+            break;
+          }
+          if( m_Buffer[ i ].key == key )
+          {
+            m_Buffer[ i ] = KeyValue();
+            m_ActiveCount--;
+          }
+          count += 1;
+        }
+      }
+
       FixUp( index, count );
     }
   }
@@ -860,17 +882,39 @@ bool MojoMultiMap< key_T, value_T >::RemoveOne( const key_T& key, const value_T&
     if( !m_Buffer[ index ].IsHashNull() )
     {
       int count = 0;
-      int i = index;
-      while( !m_Buffer[ i ].IsHashNull() )
+      bool stop = false;
+      for( int i = index; i < m_TableCount; ++i )
       {
+        if( m_Buffer[ i ].IsHashNull() )
+        {
+          stop = true;
+          break;
+        }
         if( m_Buffer[ i ].key == key && m_Buffer[ i ].value == value )
         {
           m_Buffer[ i ] = KeyValue();
           m_ActiveCount--;
         }
         count += 1;
-        i = ( i + 1 ) % m_TableCount;
       }
+      if( !stop )
+      {
+        for( int i = 0; i < index; ++i )
+        {
+          if( m_Buffer[ i ].IsHashNull() )
+          {
+            stop = true;
+            break;
+          }
+          if( m_Buffer[ i ].key == key && m_Buffer[ i ].value == value )
+          {
+            m_Buffer[ i ] = KeyValue();
+            m_ActiveCount--;
+          }
+          count += 1;
+        }
+      }
+
       FixUp( index, count );
     }
   }

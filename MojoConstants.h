@@ -36,13 +36,13 @@ static const int kMojoInputSetMax = 20;
 
 /**
  \ingroup group_config
- When using dynamic table sizing, don't shrink table below this number.
+ When using dynamic table sizing, don't shrink table below this number of entries.
  */
 static const int kMojoTableMinCount = 64;
 
 /**
  \ingroup group_config
- When using dynamic memory allocation, don't shrink buffer below this number.
+ When using dynamic memory allocation, don't shrink buffer below this number of entries.
  */
 static const int kMojoBufferMinCount = 256;
 
