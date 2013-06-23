@@ -95,7 +95,7 @@ public:
                    MojoAlloc* alloc = NULL, key_T* fixed_array = NULL, int fixed_array_count = 0 );
 
   virtual bool Contains( const key_T& key ) const override;
-  virtual void Enumerate( const MojoCollector< key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override;
   /** \private */
   virtual int _GetEnumerationCost() const override;
@@ -160,10 +160,10 @@ bool MojoCacheSet< key_T >::Contains( const key_T& key ) const
 }
 
 template< typename key_T >
-void MojoCacheSet< key_T >::Enumerate( const MojoCollector< key_T >& collector,
+bool MojoCacheSet< key_T >::Enumerate( const MojoCollector< key_T >& collector,
                                       const MojoAbstractSet< key_T >* limit ) const
 {
-  m_CachedSet.Enumerate( collector, limit );
+  return m_CachedSet.Enumerate( collector, limit );
 }
 
 template< typename key_T >

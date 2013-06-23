@@ -49,7 +49,7 @@ public:
   /**
    Push all keys into the collector object.
    */
-  virtual void Enumerate( const MojoCollector< key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const = 0;
   /**
    Used internally to optimize enumeration.
@@ -63,6 +63,54 @@ public:
   virtual int _GetChangeCount() const = 0;
   virtual ~MojoAbstractSet() {}
 };
+
+// ---------------------------------------------------------------------------------------------------------------
+
+/**
+ \class MojoTestCollector
+ Specialization of MojoCollector, with MojoSet as receiver.
+ */
+template< typename value_T >
+class MojoTestCollector final : public MojoCollector< value_T >
+{
+public:
+  /**
+   Construct from a MojoSet pointer.
+   \param[in] set The set to receive data.
+   */
+  MojoTestCollector( const MojoAbstractSet< value_T >* set )
+  : m_Set( set )
+  {}
+  virtual bool Push( const value_T& value ) const override
+  {
+    return m_Set->Contains( value );
+  }
+private:
+  const MojoAbstractSet< value_T >* m_Set;
+};
+
+template< typename key_T >
+bool MojoSubsetOf( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
+{
+  MojoTestCollector< key_T > collector( second );
+  return first->Enumerate( collector );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+
+template< typename key_T >
+bool MojoSupersetOf( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
+{
+  return MojoSubsetOf( second, first );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+
+template< typename key_T >
+bool MojoEqualTo( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
+{
+  return MojoSubsetOf( first, second ) && MojoSubsetOf( second, first );
+}
 
 // ---------------------------------------------------------------------------------------------------------------
 

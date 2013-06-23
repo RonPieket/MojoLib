@@ -67,7 +67,7 @@ uint32_t MojoFnv32( const char* s )
 
 uint32_t MojoFnv32( const char* s, int count )
 {
-  if( !s || s[ 0 ] == 0 )
+  if( !s || count == 0 )
   {
     return 0;
   }
@@ -99,7 +99,7 @@ uint64_t MojoFnv64( const char* s )
 
 uint64_t MojoFnv64( const char* s, int count )
 {
-  if( !s || s[ 0 ] == 0 )
+  if( !s || count == 0 )
   {
     return 0;
   }

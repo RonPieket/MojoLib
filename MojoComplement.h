@@ -71,7 +71,10 @@ public:
   MojoComplement& Add( const MojoAbstractSet< key_T >* s );
   virtual bool Contains( const key_T& key ) const override;
 
-  virtual void Enumerate( const MojoCollector< key_T >&, const MojoAbstractSet< key_T >* ) const {}
+  virtual bool Enumerate( const MojoCollector< key_T >&, const MojoAbstractSet< key_T >* ) const override
+  {
+    return false;
+  }
   /** \private */
   virtual int _GetEnumerationCost() const override;
   /** \private */

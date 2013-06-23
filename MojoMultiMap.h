@@ -79,15 +79,12 @@ public:
    for details on how to set a global default.
    \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
-   \param[in] fixed_array You may provide an array that the map will use for storage. If specified, no memory
-   allocation will be used.
-   \param[in] fixed_array_count Number of entries in the array.
    */
   MojoMultiMap( const char* name, const value_T& not_found_value = value_T(), const MojoConfig* config = NULL,
-               MojoAlloc* alloc = NULL, KeyValue* fixed_array = NULL, int fixed_array_count = 0 )
+               MojoAlloc* alloc = NULL )
   {
     Init();
-    Create( name, not_found_value, config, alloc, fixed_array, fixed_array_count );
+    Create( name, not_found_value, config, alloc );
   }
   
   /**
@@ -98,14 +95,10 @@ public:
    for details on how to set a global default.
    \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
-   \param[in] fixed_array You may provide an array that the map will use for storage. If specified, no memory
-   allocation will be used.
-   \param[in] fixed_array_count Number of entries in the array.
    \return Status code.
    */
   MojoStatus Create( const char* name, const value_T& not_found_value = value_T(),
-                    const MojoConfig* config = NULL, MojoAlloc* alloc = NULL, KeyValue* fixed_array = NULL,
-                    int fixed_array_count = 0 );
+                    const MojoConfig* config = NULL, MojoAlloc* alloc = NULL );
   
   /**
    Remove all entries and free all allocated buffers.
@@ -141,9 +134,9 @@ public:
   MojoStatus Remove( const key_T& key, const value_T& value );
   
   /**
-   Find value that is associated with the key.
+   Find set of values value that is associated with the key.
    */
-  value_T Find( const key_T& key ) const;
+  const MojoSet< value_T >* Find( const key_T& key ) const;
   
   /**
    Test presence of a key.
@@ -163,7 +156,7 @@ public:
   /**
    Square bracket operator is an alias for Find()
    */
-  value_T operator[]( const key_T& key ) const { return Find( key ); }
+  const MojoSet< value_T >* operator[]( const key_T& key ) const { return Find( key ); }
   
   /**
    Return table status state. This is the only way to find out if something went wrong in the default constructor.
@@ -173,81 +166,25 @@ public:
   MojoStatus GetStatus() const;
   
   /**
-   Get number of key-value pairs in the map.
-   \return Number of pairs.
+   Get number of keys in the map.
+   \return Number of keys.
    */
   int GetCount() const;
-  
+
+  /**
+   Get number of values associated with key.
+   \param[in] key Key of the key-value pair to seach for.
+   \return Number of valuess.
+   */
+  int GetValueCount( const key_T& key ) const;
+
   /**
    Return name of the map.
    \return Given name.
    */
   const char* GetName() const { return m_Name; }
-  
-  /**
-   Get index of first occupied slot in table. This is used for the ForEach... macros. It must be declared public
-   to work with the macros, but should be considered private.
-   \private
-   */
-  int _GetFirstIndex() const;
 
-  /**
-   Get index of first slot in table with a particular key. This is used for the ForEach... macros. It must be
-   declared public to work with the macros, but should be considered private.
-   \private
-   */
-  int _GetFirstIndexOf( const key_T& key ) const;
-
-  /**
-   Get index of next occupied slot in table. This is used for the ForEach... macros. It must be declared public to
-   work with the macros, but should be considered private.
-   \private
-   */
-  int _GetNextIndex( int index ) const;
-
-  /**
-   Get index of next slot in table with matching key. This is used for the ForEach... macros. It must be declared
-   public to work with the macros, but should be considered private.
-   \private
-   */
-  int _GetNextIndexOf( const key_T& key, int index ) const;
-
-  /**
-   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work
-   with the macros, but should be considered private.
-   \private
-   */
-  bool _IsIndexValid( int index ) const;
-  
-  /**
-   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work
-   with the macros, but should be considered private.
-   \private
-   */
-  bool _IsIndexValidOf( const key_T& key, int index ) const { return _IsIndexValid( index ); }
-
-  /**
-   Get key at a specific index in the table. This is used for the ForEach... macros. It must be declared public
-   to work with the macros, but should be considered private.
-   \private
-   */
-  key_T _GetKeyAt( int index ) const;
-  
-  /**
-   Get value at a specific index in the table. This is used for the ForEach... macros. It must be declared public
-   to work with the macros, but should be considered private.
-   \private
-   */
-  value_T _GetValueAt( int index ) const;
-  
-  /**
-   Get key-value pair at a specific index in the table. This is used for the ForEach... macros. It must be
-   declared public to work with the macros, but should be considered private.
-   \private
-   */
-  KeyValue _GetKeyValueAt( int index ) const;
-  
-  virtual void Enumerate( const MojoCollector< key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override;
   /** \private */
   virtual int _GetEnumerationCost() const override;
@@ -257,35 +194,18 @@ public:
   virtual ~MojoMultiMap();
 
 private:
-  
+
   MojoAlloc*          m_Alloc;
   const char*         m_Name;
-  KeyValue*           m_Buffer;
   value_T             m_NotFoundValue;
-  int                 m_ActiveCount;    // Number of key/values in play
-  int                 m_BufferCount;     // Entries allocated
-  int                 m_TableCount;     // Portion of the array currently used for hash table
+
+  MojoMap< key_T, MojoSet< value_T >* > m_Map;
+
   int                 m_ChangeCount;
   MojoStatus          m_Status;
   MojoConfig          m_Config;
 
-  void Init();
-  int FindEmptyOrMatching( const key_T& key ) const;
-  int FindEmptyOrMatching( const key_T& key, const value_T& value ) const;
-  int FindEmpty( const key_T& key ) const;
-  void Reinsert( int index );
-  void FixUp( int index, int count );
-  bool RemoveAll( const key_T& key );
-  bool RemoveOne( const key_T& key, const value_T& value );
-  bool IsFirstInRun( int index ) const;
-
-  MojoStatus Shrink();
-  MojoStatus Grow();
-  MojoStatus Resize( int new_table_count );
-  void ResizeTableInPlace( int old_table_count );
-  void CopyTable( KeyValue* old_table, int old_table_count );
-  KeyValue* AllocAndConstruct( int new_buffer_count );
-  void DestructAndFree( KeyValue* old_buffer, int old_buffer_count );
+  void                Init();
 };
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -296,10 +216,6 @@ void MojoMultiMap< key_T, value_T >::Init()
 {
   m_Alloc = NULL;
   m_Name = NULL;
-  m_Buffer = NULL;
-  m_TableCount = 0;
-  m_BufferCount = 0;
-  m_ActiveCount = 0;
   m_ChangeCount = 0;
   m_Status = kMojoStatus_NotInitialized;
 }
@@ -312,8 +228,7 @@ MojoStatus MojoMultiMap< key_T, value_T >::GetStatus() const
 
 template< typename key_T, typename value_T >
 MojoStatus MojoMultiMap< key_T, value_T >::Create( const char* name, const value_T& not_found_value,
-                                                  const MojoConfig* config, MojoAlloc* alloc,
-                                                  KeyValue* fixed_array, int fixed_array_count )
+                                                  const MojoConfig* config, MojoAlloc* alloc )
 {
   if( !config )
   {
@@ -336,25 +251,8 @@ MojoStatus MojoMultiMap< key_T, value_T >::Create( const char* name, const value
     m_Name            = name;
     m_Alloc           = alloc;
     m_Config          = *config;
-    
-    if( fixed_array_count )
-    {
-      m_Config.m_DynamicAlloc = false;
-      m_Config.m_BufferMinCount = fixed_array_count;
-      m_Alloc                 = NULL; // Destroy relies on this to not free memory.
-      
-      m_Buffer                = fixed_array;
-      m_BufferCount           = fixed_array_count;
-      // Note to self: fixed array is assumed to consist of constructed values. Don't call Construct() here.
-    }
-    else
-    {
-      m_BufferCount           = m_Config.m_BufferMinCount;
-      m_Buffer                = AllocAndConstruct( m_BufferCount );
-      m_TableCount            = m_Config.m_DynamicTable ? kMojoTableMinCount : m_BufferCount;
-    }
-    
-    m_Status = m_Buffer ? kMojoStatus_Ok : kMojoStatus_CouldNotAlloc;
+
+    m_Status = m_Map.Create( __FUNCTION__, NULL, config, alloc );
   }
   return m_Status;
 }
@@ -368,23 +266,33 @@ MojoMultiMap< key_T, value_T >::~MojoMultiMap()
 template< typename key_T, typename value_T >
 void MojoMultiMap< key_T, value_T >::Destroy()
 {
-  if( m_Alloc )
+  key_T key;
+  MojoForEachKey( m_Map, key )
   {
-    DestructAndFree( m_Buffer, m_BufferCount );
+    MojoSet< value_T >* set = m_Map.Find( key );
+    set->Destroy();
+    set->~MojoSet< value_T >();
+    m_Alloc->Free( set );
   }
+
+  m_Map.Destroy();
   Init();
 }
 
 template< typename key_T, typename value_T >
 MojoStatus MojoMultiMap< key_T, value_T >::Clear()
 {
-  for( int i = 0; i < m_TableCount; ++i )
+  key_T key;
+  MojoForEachKey( m_Map, key )
   {
-    m_Buffer[ i ] = KeyValue();
+    MojoSet< value_T >* set = m_Map.Find( key );
+    set->Destroy();
+    set->~MojoSet< value_T >();
+    m_Alloc->Free( set );
   }
-  m_ActiveCount = 0;
+
   m_ChangeCount += 1;
-  return Resize( m_Config.m_BufferMinCount );
+  return m_Map.Clear();
 }
 
 template< typename key_T, typename value_T >
@@ -399,17 +307,25 @@ MojoStatus MojoMultiMap< key_T, value_T >::Insert( const key_T& key, const value
     }
     else
     {
-      status = Grow();
-      if( !status )
+      MojoSet< value_T >* set = m_Map.Find( key );
+      if( !set )
       {
-        int index = FindEmptyOrMatching( key, value );
-        if( m_Buffer[ index ].IsHashNull() )
+        set = ( MojoSet< value_T >* )m_Alloc->Allocate( sizeof( MojoSet< value_T > ), "SET OBJECT" );
+        if( set )
         {
-          m_Buffer[ index ].key = key;
-          m_Buffer[ index ].value = value;
-          m_ActiveCount += 1;
-          m_ChangeCount += 1;
+          set = new( set ) MojoSet< value_T >;
+          set->Create( "SET PAYLOAD", &m_Config, m_Alloc );
+          m_Map.Insert( key, set );
         }
+        else
+        {
+          m_Status = kMojoStatus_CouldNotAlloc;
+        }
+      }
+      if( set )
+      {
+        m_ChangeCount += 1;
+        set->Insert( value );
       }
     }
   }
@@ -425,10 +341,13 @@ MojoStatus MojoMultiMap< key_T, value_T >::Remove( const key_T& key )
   }
   else if( !key.IsHashNull() )
   {
-    if( RemoveAll( key ) )
+    MojoSet< value_T >* set = m_Map.Remove( key );
+    if( set )
     {
       m_ChangeCount += 1;
-      Shrink();
+      set->Destroy();
+      set->~MojoSet< value_T >();
+      m_Alloc->Free( set );
       return kMojoStatus_Ok;
     }
   }
@@ -444,74 +363,29 @@ MojoStatus MojoMultiMap< key_T, value_T >::Remove( const key_T& key, const value
   }
   else if( !key.IsHashNull() )
   {
-    if( RemoveOne( key, value ) )
+    MojoSet< value_T >* set = m_Map.Find( key );
+    if( set )
     {
       m_ChangeCount += 1;
-      Shrink();
-      return kMojoStatus_Ok;
+      MojoStatus status = set->Remove( value );
+      if( set->GetCount() == 0 )
+      {
+        Remove( key );
+      }
+      return status;
     }
   }
   return kMojoStatus_NotFound;
 }
 
 template< typename key_T, typename value_T >
-value_T MojoMultiMap< key_T, value_T >::Find( const key_T& key ) const
+const MojoSet< value_T >* MojoMultiMap< key_T, value_T >::Find( const key_T& key ) const
 {
   if( !m_Status && !key.IsHashNull() )
   {
-    int index = FindEmptyOrMatching( key );
-    if( !m_Buffer[ index ].IsHashNull() )
-    {
-      return m_Buffer[ index ].value;
-    }
+    return m_Map.Find( key );
   }
-  return m_NotFoundValue;
-}
-
-template< typename key_T, typename value_T >
-int MojoMultiMap< key_T, value_T >::_GetFirstIndexOf( const key_T& key ) const
-{
-  if( !m_Status && !key.IsHashNull() )
-  {
-    int index = FindEmptyOrMatching( key );
-    if( !m_Buffer[ index ].IsHashNull() )
-    {
-      return index;
-    }
-  }
-  return m_TableCount;
-}
-
-template< typename key_T, typename value_T >
-int MojoMultiMap< key_T, value_T >::_GetNextIndexOf( const key_T& key, int index ) const
-{
-  if( !m_Status && !key.IsHashNull() )
-  {
-    for( int i = index + 1; i < m_TableCount; ++i )
-    {
-      if( m_Buffer[ i ].IsHashNull() )
-      {
-        return m_TableCount;
-      }
-      if( m_Buffer[ i ].key == key )
-      {
-        return i;
-      }
-    }
-    
-    for( int i = 0; i < index; ++i )
-    {
-      if( m_Buffer[ i ].IsHashNull() )
-      {
-        return m_TableCount;
-      }
-      if( m_Buffer[ i ].key == key )
-      {
-        return i;
-      }
-    }
-  }
-  return m_TableCount;
+  return NULL;
 }
 
 template< typename key_T, typename value_T >
@@ -519,8 +393,7 @@ bool MojoMultiMap< key_T, value_T >::Contains( const key_T& key ) const
 {
   if( !m_Status && !key.IsHashNull() )
   {
-    int index = FindEmptyOrMatching( key );
-    return !m_Buffer[ index ].IsHashNull();
+    return m_Map.Contains( key );
   }
   return false;
 }
@@ -530,8 +403,11 @@ bool MojoMultiMap< key_T, value_T >::Contains( const key_T& key, const value_T& 
 {
   if( !m_Status && !key.IsHashNull() )
   {
-    int index = FindEmptyOrMatching( key, value );
-    return !m_Buffer[ index ].IsHashNull();
+    const MojoSet< value_T >* set = m_Map.Find( key );
+    if( set )
+    {
+      return set->Find( value );
+    }
   }
   return false;
 }
@@ -539,445 +415,32 @@ bool MojoMultiMap< key_T, value_T >::Contains( const key_T& key, const value_T& 
 template< typename key_T, typename value_T >
 int MojoMultiMap< key_T, value_T >::GetCount() const
 {
-  return m_ActiveCount;
+  return m_Map->GetCount();
 }
 
 template< typename key_T, typename value_T >
-int MojoMultiMap< key_T, value_T >::_GetFirstIndex() const
+int MojoMultiMap< key_T, value_T >::GetValueCount( const key_T& key ) const
 {
-  return _GetNextIndex( -1 );
-}
-
-template< typename key_T, typename value_T >
-bool MojoMultiMap< key_T, value_T >::IsFirstInRun( int index ) const
-{
-  const key_T& key = m_Buffer[ index ].key;
-  
-  for( int i = index - 1; i >= 0; --i )
+  const MojoSet< value_T >* set = m_Map.Find( key );
+  if( set )
   {
-    if( m_Buffer[ i ].IsHashNull() )
-    {
-      return true;
-    }
-    if( m_Buffer[ i ].key == key )
-    {
-      return false;
-    }
+    return set->GetCount();
   }
-  
-  for( int i = m_TableCount - 1; i > index; --i )
-  {
-    if( m_Buffer[ i ].IsHashNull() )
-    {
-      return true;
-    }
-    if( m_Buffer[ i ].key == key )
-    {
-      return false;
-    }
-  }
-  
-  return true;
-}
-
-template< typename key_T, typename value_T >
-int MojoMultiMap< key_T, value_T >::_GetNextIndex( int index ) const
-{
-  for( int i = index + 1; i < m_TableCount; ++i )
-  {
-    if( !m_Buffer[ i ].IsHashNull() && IsFirstInRun( i ) )
-    {
-      return i;
-    }
-  }
-  return m_TableCount;
-}
-
-template< typename key_T, typename value_T >
-bool MojoMultiMap< key_T, value_T >::_IsIndexValid( int index ) const
-{
-  return !m_Status && index < m_TableCount;
-}
-
-template< typename key_T, typename value_T >
-key_T MojoMultiMap< key_T, value_T >::_GetKeyAt( int index ) const
-{
-  return m_Buffer[ index ].key;
-}
-
-template< typename key_T, typename value_T >
-value_T MojoMultiMap< key_T, value_T >::_GetValueAt( int index ) const
-{
-  return m_Buffer[ index ].value;
-}
-
-template< typename key_T, typename value_T >
-MojoKeyValue< key_T, value_T >* MojoMultiMap< key_T, value_T >::AllocAndConstruct( int new_buffer_count )
-{
-  KeyValue* new_buffer = ( KeyValue* )m_Alloc->Allocate( new_buffer_count * sizeof( KeyValue ), m_Name );
-  if( new_buffer )
-  {
-    for( int i = 0; i < new_buffer_count; ++i )
-    {
-      new( new_buffer + i ) KeyValue();
-    }
-  }
-  return new_buffer;
-}
-
-template< typename key_T, typename value_T >
-void MojoMultiMap< key_T, value_T >::DestructAndFree( MojoKeyValue< key_T, value_T >* old_buffer,
-                                                     int old_buffer_count )
-{
-  if( old_buffer )
-  {
-    for( int i = 0; i < old_buffer_count; ++i )
-    {
-      old_buffer[ i ].~KeyValue();
-    }
-    m_Alloc->Free( old_buffer );
-  }
-}
-
-template< typename key_T, typename value_T >
-void MojoMultiMap< key_T, value_T >::ResizeTableInPlace( int old_table_count )
-{
-  if( m_TableCount != old_table_count )
-  {
-    for( int i = 0; i < old_table_count; ++i )
-    {
-      if( !m_Buffer[ i ].IsHashNull() )
-      {
-        Reinsert( i );
-      }
-    }
-    for( int i = old_table_count; i < m_TableCount; ++i )
-    {
-      if( !m_Buffer[ i ].IsHashNull() )
-      {
-        Reinsert( i );
-      }
-      else
-      {
-        break;
-      }
-    }
-  }
-}
-
-template< typename key_T, typename value_T >
-void MojoMultiMap< key_T, value_T >::CopyTable( KeyValue* old_table, int old_table_count )
-{
-  for( int i = 0; i < old_table_count; ++i )
-  {
-    if( !old_table[ i ].IsHashNull() )
-    {
-      Insert( old_table[ i ].key, old_table[ i ].value );
-    }
-  }
-}
-
-template< typename key_T, typename value_T >
-MojoStatus MojoMultiMap< key_T, value_T >::Resize( int new_table_count )
-{
-  if( m_Status )
-  {
-    return m_Status;
-  }
-  
-  bool must_realloc = ( new_table_count > m_BufferCount ) ||
-  ( m_BufferCount > m_Config.m_BufferMinCount && m_Config.m_DynamicAlloc );
-  
-  if( must_realloc )
-  {
-    // Allocate new buffer, copy data over.
-    if( !m_Config.m_DynamicAlloc || !m_Config.m_DynamicTable )
-    {
-      return kMojoStatus_CouldNotAlloc;
-    }
-    
-    KeyValue* new_buffer = AllocAndConstruct( new_table_count );
-    
-    if( !new_buffer )
-    {
-      return kMojoStatus_CouldNotAlloc;
-    }
-    
-    // Copy old table into new location.
-    int old_table_count = m_TableCount;
-    KeyValue* old_buffer = m_Buffer;
-    
-    m_TableCount = new_table_count;
-    m_BufferCount = new_table_count;
-    m_Buffer = new_buffer;
-    m_ActiveCount = 0;
-    CopyTable( old_buffer, old_table_count );
-    DestructAndFree( old_buffer, old_table_count );
-  }
-  else
-  {
-    // Assert explanation: if m_DynamicTable is false, m_BufferCount anf m_TableCount will have been initialized
-    // to m_BufferMinCount. So if we want to grow, must_realloc would have been set and we don't get to resize in
-    // place. If we want to shrink, the Shrink() function would have tested and not even called Resize()
-    assert( m_Config.m_DynamicTable );
-    
-    // No reallocation. Resize in place.
-    int old_table_count = m_TableCount;
-    m_TableCount = new_table_count;
-    ResizeTableInPlace( old_table_count );
-  }
-  return kMojoStatus_Ok;
-}
-
-template< typename key_T, typename value_T >
-int MojoMultiMap< key_T, value_T >::FindEmptyOrMatching( const key_T& key ) const
-{
-  int start_index = key.GetHash() % m_TableCount;
-  
-  // Look forward to the end of the key array
-  for( int i = start_index; i < m_TableCount; ++i )
-  {
-    if( m_Buffer[ i ].IsHashNull() || m_Buffer[ i ].key == key )
-    {
-      return i;
-    }
-  }
-  
-  // If not found, wrap around to the start
-  for( int i = 0; i < start_index; ++i )
-  {
-    if( m_Buffer[ i ].IsHashNull() || m_Buffer[ i ].key == key )
-    {
-      return i;
-    }
-  }
-  
   return 0;
 }
 
-template< typename key_T, typename value_T >
-int MojoMultiMap< key_T, value_T >::FindEmptyOrMatching( const key_T& key, const value_T& value ) const
-{
-  int start_index = key.GetHash() % m_TableCount;
-  
-  // Look forward to the end of the key array
-  for( int i = start_index; i < m_TableCount; ++i )
-  {
-    if( m_Buffer[ i ].IsHashNull() || ( m_Buffer[ i ].key == key && m_Buffer[ i ].value == value ) )
-    {
-      return i;
-    }
-  }
-  
-  // If not found, wrap around to the start
-  for( int i = 0; i < start_index; ++i )
-  {
-    if( m_Buffer[ i ].IsHashNull() || ( m_Buffer[ i ].key == key && m_Buffer[ i ].value == value ) )
-    {
-      return i;
-    }
-  }
-  
-  return 0;
-}
 
 template< typename key_T, typename value_T >
-void MojoMultiMap< key_T, value_T >::Reinsert( int index )
-{
-  // Only move the entry if it is in the wrong place (due to collision)
-  int new_index = FindEmptyOrMatching( m_Buffer[ index ].key, m_Buffer[ index ].value );
-  if( new_index != index )
-  {
-    // Occupy new location
-    m_Buffer[ new_index ] = m_Buffer[ index ];
-    
-    // Vacate old location
-    m_Buffer[ index ] = KeyValue();
-  }
-}
-
-template< typename key_T, typename value_T >
-void MojoMultiMap< key_T, value_T >::FixUp( int index, int count )
-{
-  for( int i = index + 1; i < m_TableCount; ++i )
-  {
-    if( !count-- )
-    {
-      return;
-    }
-    if( !m_Buffer[ i ].IsHashNull() )
-    {
-      Reinsert( i );
-    }
-  }
-  for( int i = 0; i < index; ++i )
-  {
-    if( !count-- )
-    {
-      return;
-    }
-    if( !m_Buffer[ i ].IsHashNull() )
-    {
-      Reinsert( i );
-    }
-  }
-}
-
-template< typename key_T, typename value_T >
-bool MojoMultiMap< key_T, value_T >::RemoveAll( const key_T& key )
-{
-  int before_count = m_ActiveCount;
-  if( !key.IsHashNull() )
-  {
-    int index = FindEmptyOrMatching( key );
-    if( !m_Buffer[ index ].IsHashNull() )
-    {
-      int count = 0;
-      bool stop = false;
-      for( int i = index; i < m_TableCount; ++i )
-      {
-        if( m_Buffer[ i ].IsHashNull() )
-        {
-          stop = true;
-          break;
-        }
-        if( m_Buffer[ i ].key == key )
-        {
-          m_Buffer[ i ] = KeyValue();
-          m_ActiveCount--;
-        }
-        count += 1;
-      }
-      if( !stop )
-      {
-        for( int i = 0; i < index; ++i )
-        {
-          if( m_Buffer[ i ].IsHashNull() )
-          {
-            stop = true;
-            break;
-          }
-          if( m_Buffer[ i ].key == key )
-          {
-            m_Buffer[ i ] = KeyValue();
-            m_ActiveCount--;
-          }
-          count += 1;
-        }
-      }
-
-      FixUp( index, count );
-    }
-  }
-  return m_ActiveCount < before_count;
-}
-
-template< typename key_T, typename value_T >
-bool MojoMultiMap< key_T, value_T >::RemoveOne( const key_T& key, const value_T& value )
-{
-  int before_count = m_ActiveCount;
-  if( !key.IsHashNull() && !value.IsHashNull() )
-  {
-    int index = FindEmptyOrMatching( key );
-    if( !m_Buffer[ index ].IsHashNull() )
-    {
-      int count = 0;
-      bool stop = false;
-      for( int i = index; i < m_TableCount; ++i )
-      {
-        if( m_Buffer[ i ].IsHashNull() )
-        {
-          stop = true;
-          break;
-        }
-        if( m_Buffer[ i ].key == key && m_Buffer[ i ].value == value )
-        {
-          m_Buffer[ i ] = KeyValue();
-          m_ActiveCount--;
-        }
-        count += 1;
-      }
-      if( !stop )
-      {
-        for( int i = 0; i < index; ++i )
-        {
-          if( m_Buffer[ i ].IsHashNull() )
-          {
-            stop = true;
-            break;
-          }
-          if( m_Buffer[ i ].key == key && m_Buffer[ i ].value == value )
-          {
-            m_Buffer[ i ] = KeyValue();
-            m_ActiveCount--;
-          }
-          count += 1;
-        }
-      }
-
-      FixUp( index, count );
-    }
-  }
-  return m_ActiveCount < before_count;
-}
-
-template< typename key_T, typename value_T >
-MojoStatus MojoMultiMap< key_T, value_T >::Grow()
-{
-  // Make more room if table is getting crowded
-  if( m_ActiveCount * 100 >= m_TableCount * kMojoTableGrowThreshold )
-  {
-    int new_size = m_TableCount * 2;
-    if( !m_Config.m_DynamicAlloc && m_TableCount < m_BufferCount )
-    {
-      // Max out buffer before failing.
-      new_size = MojoMin( new_size, m_BufferCount );
-    }
-    return Resize( new_size );
-  }
-  return kMojoStatus_Ok;
-}
-
-template< typename key_T, typename value_T >
-MojoStatus MojoMultiMap< key_T, value_T >::Shrink()
-{
-  // Shrink if it's getting too empty
-  if( m_Config.m_DynamicTable && m_TableCount > kMojoTableMinCount
-     && m_ActiveCount * 100 < m_TableCount * kMojoTableShrinkThreshold )
-  {
-    return Resize( m_TableCount / 2 );
-  }
-  return kMojoStatus_Ok;
-}
-
-template< typename key_T, typename value_T >
-void MojoMultiMap< key_T, value_T >::Enumerate( const MojoCollector< key_T >& collector,
+bool MojoMultiMap< key_T, value_T >::Enumerate( const MojoCollector< key_T >& collector,
                                                const MojoAbstractSet< key_T >* limit ) const
 {
-  if( limit )
-  {
-    for( int i = _GetFirstIndex(); _IsIndexValid( i ); i = _GetNextIndex( i ) )
-    {
-      key_T key = _GetKeyAt( i );
-      if( limit->Contains( key ) )
-      {
-        collector.Push( key );
-      }
-    }
-  }
-  else
-  {
-    for( int i = _GetFirstIndex(); _IsIndexValid( i ); i = _GetNextIndex( i ) )
-    {
-      collector.Push( _GetKeyAt( i ) );
-    }
-  }
+  return m_Map.Enumerate( collector, limit );
 }
 
 template< typename key_T, typename value_T >
 int MojoMultiMap< key_T, value_T >::_GetEnumerationCost() const
 {
-  return GetCount();
+  return m_Map._GetEnumerationCost();
 }
 
 template< typename key_T, typename value_T >
@@ -988,19 +451,3 @@ int MojoMultiMap< key_T, value_T >::_GetChangeCount() const
 
 // ---------------------------------------------------------------------------------------------------------------
 
-/**
- \ingroup group_container
- A macro to help you iterate over all values of a specified key in a MojoMultiMap
- This macro will expand into a <tt>for(;;)</tt> statement that contains all the magic to visit all values of the
- key in a MojoMultiMap. This macro works with MojoMultiMap only
- \param[in] container MojoMultiMap by reference
- \param[in] key The key of which we want to visit all values
- \param[out] value_variable Existing variable that will receive each value for the key in turn
- */
-#define MojoForEachMultiValue( container, key, value_variable ) \
-for( int _i = ( container )._GetFirstIndexOf( key ); \
-  ( container )._IsIndexValidOf( key, _i ) ? \
-  ( value_variable = ( container )._GetValueAt( _i ), true ) : false; \
-  _i = ( container )._GetNextIndexOf( key, _i ) )
-
-// ---------------------------------------------------------------------------------------------------------------

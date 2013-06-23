@@ -71,7 +71,7 @@ public:
    */
   MojoDifference& Add( const MojoAbstractSet< key_T >* s );
   virtual bool Contains( const key_T& key ) const override;
-  virtual void Enumerate( const MojoCollector< key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override;
   /** \private */
   virtual int _GetEnumerationCost() const override;
@@ -148,9 +148,10 @@ inline int MojoDifference< key_T >::_GetChangeCount() const
 }
 
 template< typename key_T >
-inline void MojoDifference< key_T >::Enumerate( const MojoCollector< key_T >& collector,
+inline bool MojoDifference< key_T >::Enumerate( const MojoCollector< key_T >& collector,
                                                const MojoAbstractSet< key_T >* limit ) const
 {
+  bool more = true;
   if( limit )
   {
     MojoDifference< key_T > combined_limit;
@@ -160,7 +161,7 @@ inline void MojoDifference< key_T >::Enumerate( const MojoCollector< key_T >& co
     {
       combined_limit.Add( m_Sets[ i ] );
     }
-    m_Sets[ 0 ]->Enumerate( collector, &combined_limit );
+    more = m_Sets[ 0 ]->Enumerate( collector, &combined_limit );
   }
   else
   {
@@ -169,8 +170,9 @@ inline void MojoDifference< key_T >::Enumerate( const MojoCollector< key_T >& co
     {
       combined_limit.Add( m_Sets[ i ] );
     }
-    m_Sets[ 0 ]->Enumerate( collector, &combined_limit );
+    more = m_Sets[ 0 ]->Enumerate( collector, &combined_limit );
   }
+  return more;
 }
 
 // ---------------------------------------------------------------------------------------------------------------

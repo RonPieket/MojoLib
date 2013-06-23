@@ -53,6 +53,8 @@ static uint32_t Random()
 
 // ---------------------------------------------------------------------------------------------------------------
 
+MojoMap< MojoHashable< void* >, const char* > g_AllocName( "g_AllocName", NULL );
+
 class CountingAlloc final : public MojoAlloc
 {
 public:
@@ -62,14 +64,28 @@ public:
   {}
   virtual void* Allocate( size_t byte_count, const char* name ) override
   {
+    byte_count += -byte_count & 15; // Make 16-byte aligned
     m_TotalAlloc += 1;
     m_ActiveAlloc += 1;
-    return malloc( byte_count );
+    void* p = malloc( byte_count );
+    g_AllocName.Insert( p, name );
+    return p;
   }
   virtual void Free( void* p ) override
   {
+    g_AllocName.Remove( p );
     m_ActiveAlloc -= 1;
     free( p );
+  }
+  void Print()
+  {
+    printf( "\n" );
+    void* p;
+    MojoForEachKey( g_AllocName, p )
+    {
+      const char* name = g_AllocName.Find( p );
+      printf( "Alloc: %s\n", name );
+    }
   }
   int m_TotalAlloc;
   int m_ActiveAlloc;
@@ -523,23 +539,28 @@ static MojoId MakeId( const char* group, int number )
 
 REGISTER_UNIT_TEST( MojoRelationTest, Container )
 {
+  EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
+
   MojoRelation< MojoId, MojoId > rel( "test" );
 
-  // For 0..49, insert consecutively
+  static const int n = 1000;
+
+  // For first half, insert consecutively
   for( char c = 'a'; c <= 'z'; ++c )
   {
     char group[ 20 ];
     snprintf( group, sizeof group, "%c", c );
     MojoId parent = group;
-    for( int i = 0; i < 50; ++i )
+    for( int i = 0; i < n / 2; ++i )
     {
       MojoId child = MakeId( group, i );
       rel.InsertChildParent( child, parent );
     }
   }
+  EXPECT_INT( 26 * n / 2, rel.GetCount() );
 
-  // For 50..99, insert jumbled up
-  for( int i = 50; i < 100; ++i )
+  // For second half, insert jumbled up
+  for( int i = n / 2; i < n; ++i )
   {
     for( char c = 'z'; c >= 'a'; --c )
     {
@@ -550,6 +571,7 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
       rel.InsertChildParent( child, parent );
     }
   }
+  EXPECT_INT( 26 * n, rel.GetCount() );
 
   // Now remove all even children, to exercise reordering.
   for( char c = 'a'; c <= 'z'; ++c )
@@ -557,12 +579,13 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     char group[ 20 ];
     snprintf( group, sizeof group, "%c", c );
     MojoId parent = group;
-    for( int i = 0; i < 100; i += 2 )
+    for( int i = 0; i < n; i += 2 )
     {
       MojoId child = MakeId( group, i );
       rel.RemoveChild( child );
     }
   }
+  EXPECT_INT( 26 * n / 2, rel.GetCount() );
 
   // Now remove all parents above and including 'q'.
   for( char c = 'q'; c <= 'z'; ++c )
@@ -570,13 +593,14 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     char group[ 20 ];
     snprintf( group, sizeof group, "%c", c );
     MojoId parent = group;
-    for( int i = 1; i < 100; i += 2 )
+    for( int i = 1; i < n; i += 2 )
     {
       MojoId child = MakeId( group, i );
       rel.RemoveChild( child );
     }
   }
-  
+  EXPECT_INT( 16 * n / 2, rel.GetCount() );
+
   // Now table contains parents 'a'-'p', and only oddly numbered children
 
   // Find all children's parents
@@ -585,7 +609,7 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     char group[ 20 ];
     snprintf( group, sizeof group, "%c", c );
     MojoId parent = group;
-    for( int i = 1; i < 100; i += 2 )
+    for( int i = 1; i < n; i += 2 )
     {
       MojoId child = MakeId( group, i );
       MojoId found_parent = rel.FindParent( child );
@@ -600,7 +624,7 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     char group[ 20 ];
     snprintf( group, sizeof group, "%c", c );
     MojoId parent = group;
-    for( int i = 0; i < 100; i += 2 )
+    for( int i = 0; i < n; i += 2 )
     {
       MojoId child = MakeId( group, i );
       MojoId found_parent = rel.FindParent( child );
@@ -614,7 +638,7 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     char group[ 20 ];
     snprintf( group, sizeof group, "%c", c );
     MojoId parent = group;
-    for( int i = 0; i < 100; i += 1 )
+    for( int i = 0; i < n; i += 1 )
     {
       MojoId child = MakeId( group, i );
       MojoId found_parent = rel.FindParent( child );
@@ -631,13 +655,20 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     MojoId child;
 
     int count = 0;
-    MojoForEachMultiValue( rel, parent, child )
+    const MojoSet< MojoId >* children = rel.FindChildren( parent );
+    if( children )
     {
-      count += 1;
-      EXPECT_INT( c, child.AsCString()[ 0 ] );
+      MojoForEachKey( *children, child )
+      {
+        count += 1;
+        EXPECT_INT( c, child.AsCString()[ 0 ] );
+      }
     }
-    EXPECT_INT( 50, count );
+    EXPECT_INT( n / 2, count );
   }
+
+  rel.Destroy();
+  EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -802,13 +833,15 @@ public:
     return NULL != strstr( id.AsCString(), m_TestStr );
   }
   
-  virtual void Enumerate( const MojoCollector< MojoId >&, const MojoAbstractSet< MojoId >* ) const override {}
+  virtual bool Enumerate( const MojoCollector< MojoId >&, const MojoAbstractSet< MojoId >* ) const override
+  {
+    return false;
+  }
   virtual int _GetEnumerationCost() const override { return INT_MAX; }
   virtual int _GetChangeCount() const override { return 0; }
 private:
   const char* m_TestStr;
 };
-
 
 REGISTER_UNIT_TEST( MojoBooleanTest, Boolean )
 {
@@ -817,7 +850,7 @@ REGISTER_UNIT_TEST( MojoBooleanTest, Boolean )
   MojoSet< MojoId > two_wheels( "2 Wheels" );
   MojoSet< MojoId > four_wheels( "4 Wheels" );
   MojoSet< MojoId > more_wheels( "More Wheels" );
-  
+
   human_powered.Insert( "American Flyer" );
   human_powered.Insert( "Bicycle" );
   human_powered.Insert( "Kayak" );
@@ -837,7 +870,7 @@ REGISTER_UNIT_TEST( MojoBooleanTest, Boolean )
   two_wheels.Insert( "Bicycle" );
   two_wheels.Insert( "Rickshaw" );
   two_wheels.Insert( "Electric Scooter" );
-  
+
   four_wheels.Insert( "American Flyer" );
   four_wheels.Insert( "Sedan" );
   four_wheels.Insert( "Pickup Truck" );
@@ -845,7 +878,7 @@ REGISTER_UNIT_TEST( MojoBooleanTest, Boolean )
   four_wheels.Insert( "Golf Cart" );
 
   more_wheels.Insert( "18 Wheeler" );
-  
+
   StringFilter string_filter_er( "er" );
 
   MojoUnion< MojoId > two_four_wheels_set( &four_wheels, &two_wheels );
@@ -869,12 +902,48 @@ REGISTER_UNIT_TEST( MojoBooleanTest, Boolean )
   EXPECT_INT( 2, CountSet( &human_powered_two_wheels ) );   // "Rickshaw", "Bicycle"
   EXPECT_INT( 1, CountSet( &human_powered_no_wheels ) );    // "Kayak"
   EXPECT_INT( 5, CountSet( &all_vehicles_four_wheels ) );   // "Sedan", "SUV", "American Flyer",
-                                                            // "Golf Cart", "Pickup Truck"
+  // "Golf Cart", "Pickup Truck"
   EXPECT_INT( 4, CountSet( &all_vehicles_two_wheels ) );    // "Electric Scooter", "Rickshaw", "Bicycle",
-                                                            // "Motorcycle"
+  // "Motorcycle"
   EXPECT_INT( 3, CountSet( &all_vehicles_no_wheels ) );     // "Kayak", "Yacht", "Helicopter"
   EXPECT_INT( 4, CountSet( &vehicles_with_er ) );           // "American Flyer", "18 Wheeler", "Electric Scooter",
-                                                            // "Helicopter"
+  // "Helicopter"
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+
+REGISTER_UNIT_TEST( MojoEqualityTest, Boolean )
+{
+  MojoSet< MojoId > first( "first" );
+  MojoSet< MojoId > second( "second" );
+  MojoSet< MojoId > equal_to_first( "equal_to_first" );
+  MojoSet< MojoId > super_of_first( "super_of_first" );
+
+  first.Insert( "one" );
+  first.Insert( "two" );
+  first.Insert( "three" );
+
+  equal_to_first.Insert( "one" );
+  equal_to_first.Insert( "two" );
+  equal_to_first.Insert( "three" );
+
+  super_of_first.Insert( "one" );
+  super_of_first.Insert( "two" );
+  super_of_first.Insert( "three" );
+  super_of_first.Insert( "four" );
+
+  second.Insert( "un" );
+  second.Insert( "deux" );
+  second.Insert( "trois" );
+
+  EXPECT_TRUE( MojoEqualTo( &first, &first ) );
+  EXPECT_TRUE( MojoEqualTo( &first, &equal_to_first ) );
+  EXPECT_FALSE( MojoEqualTo( &first, &super_of_first ) );
+  EXPECT_FALSE( MojoEqualTo( &super_of_first, &first ) );
+  EXPECT_TRUE( MojoSubsetOf( &first, &super_of_first ) );
+  EXPECT_TRUE( MojoSupersetOf( &super_of_first, &first ) );
+  EXPECT_FALSE( MojoSubsetOf( &second, &super_of_first ) );
+  EXPECT_FALSE( MojoSupersetOf( &super_of_first, &second ) );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -949,7 +1018,8 @@ REGISTER_UNIT_TEST( MojoFnTest, Function )
       MojoAbstractSet< MojoHash< char > >* func = MakeFn( variation, &relation, &input_set );
       MojoSet< MojoHash< char > > output_set( "output" );
       func->Enumerate( MojoSetCollector< MojoHash< char > >( &output_set ) );
-      
+      EXPECT_TRUE( MojoEqualTo( &output_set, func ) );
+
       // Verify that we got what we expected.
       for( int k = 0; k < 5; ++k )
       {
@@ -978,11 +1048,12 @@ int main( int argc, const char** argv )
 {
   int error_count = 0;
   
+  g_MojoIdManager.Create();
+
   MojoConfig config;
   MojoAlloc::SetDefault( &MyCountingAlloc );
   MojoConfig::SetDefault( &config );
 
-  g_MojoIdManager.Create();
   MyCountingAlloc.m_TotalAlloc = 0;
   MyCountingAlloc.m_ActiveAlloc = 0;
   

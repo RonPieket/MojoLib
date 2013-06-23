@@ -60,13 +60,15 @@ private:
     , m_Limit( limit )
     {}
     
-    virtual void Push( const key_T& key ) const override
+    virtual bool Push( const key_T& key ) const override
     {
+      bool more = true;
       key_T parent = m_Relation->FindParent( key );
       if( !parent.IsHashNull() && ( !m_Limit || m_Limit->Contains( parent ) ) )
       {
-        m_Collector.Push( parent );
+        more = m_Collector.Push( parent );
       }
+      return more;
     }
   private:
     const MojoCollector< key_T >&   m_Collector;
@@ -88,21 +90,25 @@ public:
   virtual bool Contains( const key_T& key ) const override
   {
     // Key is a parent in the relation.
-    key_T child;
-    MojoForEachChildOfParent( *m_Relation, key, child )
+    const MojoSet< key_T >* children = m_Relation->FindChildren( key );
+    if( children )
     {
-      if( m_Set->Contains( child ) )
+      key_T child;
+      MojoForEachKey( *children, child )
       {
-        return true;
+        if( m_Set->Contains( child ) )
+        {
+          return true;
+        }
       }
     }
     return false;
   }
   
-  virtual void Enumerate( const MojoCollector< key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override
   {
-    m_Set->Enumerate( Collector( collector, m_Relation, limit ) );
+    return m_Set->Enumerate( Collector( collector, m_Relation, limit ) );
   }
   
   /** \private */

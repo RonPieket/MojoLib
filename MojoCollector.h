@@ -38,9 +38,10 @@
  \code
  class PrintIdCollector : MojoCollector< MojoId >
  {
-   virtual void Push( const MojoId& id ) const
+   virtual bool Push( const MojoId& id )
    {
      printf( "Pushing %s\n", id.AsCString() );
+     return true;
    }
  };
  \endcode
@@ -52,8 +53,9 @@ public:
   /**
    Add element to container.
    \param[in] value The element to be added.
+   \return Normally true. Return false to abort collection.
    */
-  virtual void Push( const value_T& value ) const = 0;
+  virtual bool Push( const value_T& value ) const = 0;
 };
 
 // ---------------------------------------------------------------------------------------------------------------

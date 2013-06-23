@@ -70,16 +70,13 @@ public:
    for details on how to set a global default.
    \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
-   \param[in] fixed_array You may provide an array that the map will use for storage. If specified, no memory
-   allocation will be used.
-   \param[in] fixed_array_count Number of entries in the array.
    */
   MojoRelation( const char* name, const child_key_T& child_not_found_value = child_key_T(),
                const parent_key_T& parent_not_found_value = parent_key_T(), const MojoConfig* config = NULL,
-               MojoAlloc* alloc = NULL, KeyValue* fixed_array = NULL, int fixed_array_count = 0 )
+               MojoAlloc* alloc = NULL )
   {
     Init();
-    Create( name, child_not_found_value, parent_not_found_value, config, alloc, fixed_array, fixed_array_count );
+    Create( name, child_not_found_value, parent_not_found_value, config, alloc );
   }
   
   /**
@@ -98,7 +95,7 @@ public:
    */
   MojoStatus Create( const char* name, const child_key_T& child_not_found_value = child_key_T(),
                     const parent_key_T& parent_not_found_value = parent_key_T(), const MojoConfig* config = NULL,
-                   MojoAlloc* alloc = NULL, KeyValue* fixed_array = NULL, int fixed_array_count = 0 );
+                   MojoAlloc* alloc = NULL );
   
   /**
    Remove all entries and free all allocated buffers.
@@ -138,7 +135,14 @@ public:
    \return Parent of the child, or not_found_value.
    */
   parent_key_T FindParent( const child_key_T& child ) const;
-  
+
+  /**
+   Find set of children of given parent
+   \param[in] parent Parent to look for.
+   \return const MojoSet< child_key_T >*, or NULL.
+   */
+  const MojoSet< child_key_T >* FindChildren( const parent_key_T& parent ) const;
+
   /**
    Test presence of a child. If it is present, it means the child has a parent.
    \param[in] child Child to look for.
@@ -205,35 +209,7 @@ public:
    */
   child_key_T _GetKeyAt( int index ) const;
 
-  /**
-   Get index of next slot in table with matching key. This is used for the ForEach... macros. It must be declared
-   public to work with the macros, but should be considered private.
-   \private
-   */
-  int _GetFirstIndexOf( const parent_key_T& key ) const;
-
-  /**
-   Get index of next slot in table with matching key. This is used for the ForEach... macros. It must be declared
-   public to work with the macros, but should be considered private.
-   \private
-   */
-  int _GetNextIndexOf( const parent_key_T& key, int index ) const;
-
-  /**
-   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work
-   with the macros, but should be considered private.
-   \private
-   */
-  bool _IsIndexValidOf( const parent_key_T& key, int index ) const;
-
-  /**
-   Get value at a specific index in the table. This is used for the ForEach... macros. It must be declared public
-   to work with the macros, but should be considered private.
-   \private
-   */
-  child_key_T _GetValueAt( int index ) const;
-
-  virtual void Enumerate( const MojoCollector< child_key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< child_key_T >& collector,
                          const MojoAbstractSet< child_key_T >* limit = NULL ) const override;
   /** \private */
   virtual int _GetEnumerationCost() const override;
@@ -276,19 +252,11 @@ template< typename child_key_T, typename parent_key_T >
 MojoStatus MojoRelation< child_key_T, parent_key_T >::Create( const char* name,
                                          const child_key_T& child_not_found_value,
                                          const parent_key_T& parent_not_found_value,
-                                         const MojoConfig* config, MojoAlloc* alloc,
-                                         KeyValue* fixed_array,
-                                         int fixed_array_count)
+                                         const MojoConfig* config, MojoAlloc* alloc )
 {
   m_Name = name;
-  int count = fixed_array_count / 2;
-  m_ParentToChild.Create( name, child_not_found_value, config, alloc, fixed_array, count );
-  if( count )
-  {
-    fixed_array += count;
-    count = fixed_array_count - count;
-  }
-  m_ChildToParent.Create( name, parent_not_found_value, config, alloc, fixed_array, count );
+  m_ParentToChild.Create( name, child_not_found_value, config, alloc );
+  m_ChildToParent.Create( name, parent_not_found_value, config, alloc );
 
   return GetStatus();
 }
@@ -357,10 +325,14 @@ MojoStatus MojoRelation< child_key_T, parent_key_T >::RemoveParent( const parent
 {
   if( !parent.IsHashNull() )
   {
-    child_key_T child;
-    MojoForEachMultiValue( m_ParentToChild, parent, child )
+    const MojoSet< child_key_T >* children = FindChildren( parent );
+    if( children )
     {
-      m_ChildToParent.Remove( child );
+      child_key_T child;
+      MojoForEachKey( *children, child )
+      {
+        m_ChildToParent.Remove( child );
+      }
     }
     return m_ParentToChild.Remove( parent );
   }
@@ -410,27 +382,29 @@ child_key_T MojoRelation< child_key_T, parent_key_T >::_GetKeyAt( int index ) co
 }
 
 template< typename child_key_T, typename parent_key_T >
-void MojoRelation< child_key_T, parent_key_T >::Enumerate( const MojoCollector< child_key_T >& collector,
+bool MojoRelation< child_key_T, parent_key_T >::Enumerate( const MojoCollector< child_key_T >& collector,
                                       const MojoAbstractSet< child_key_T >* limit ) const
 {
+  bool more = true;
   if( limit )
   {
-    for( int i = _GetFirstIndex(); _IsIndexValid( i ); i = _GetNextIndex( i ) )
+    for( int i = _GetFirstIndex(); more && _IsIndexValid( i ); i = _GetNextIndex( i ) )
     {
       child_key_T key = _GetKeyAt( i );
       if( limit->Contains( key ) )
       {
-        collector.Push( key );
+        more = collector.Push( key );
       }
     }
   }
   else
   {
-    for( int i = _GetFirstIndex(); _IsIndexValid( i ); i = _GetNextIndex( i ) )
+    for( int i = _GetFirstIndex(); more && _IsIndexValid( i ); i = _GetNextIndex( i ) )
     {
-      collector.Push( _GetKeyAt( i ) );
+      more = collector.Push( _GetKeyAt( i ) );
     }
   }
+  return more;
 }
 
 template< typename child_key_T, typename parent_key_T >
@@ -452,44 +426,9 @@ parent_key_T MojoRelation< child_key_T, parent_key_T >::FindParent( const child_
 }
 
 template< typename child_key_T, typename parent_key_T >
-int MojoRelation< child_key_T, parent_key_T >::_GetFirstIndexOf( const parent_key_T& key ) const
+const MojoSet< child_key_T >* MojoRelation< child_key_T, parent_key_T >::FindChildren( const parent_key_T& parent ) const
 {
-  return m_ParentToChild._GetFirstIndexOf( key );
+  return m_ParentToChild.Find( parent );
 }
-
-template< typename child_key_T, typename parent_key_T >
-int MojoRelation< child_key_T, parent_key_T >::_GetNextIndexOf( const parent_key_T& key, int index ) const
-{
-  return m_ParentToChild._GetNextIndexOf( key, index );
-}
-
-template< typename child_key_T, typename parent_key_T >
-bool MojoRelation< child_key_T, parent_key_T >::_IsIndexValidOf( const parent_key_T& key, int index ) const
-{
-  return m_ParentToChild._IsIndexValidOf( key, index );
-}
-
-template< typename child_key_T, typename parent_key_T >
-child_key_T MojoRelation< child_key_T, parent_key_T >::_GetValueAt( int index ) const
-{
-  return m_ParentToChild._GetValueAt( index );
-}
-
-// ---------------------------------------------------------------------------------------------------------------
-
-/**
- \ingroup group_container
- A macro to help you iterate over all children of a given parent in a MojoRelation
- This macro will expand into a <tt>for(;;)</tt> statement that contains all the magic to visit all children of the
- parent in the relation.
- \param[in] container MojoRelation by reference
- \param[in] parent The parent whose children we want to visit
- \param[out] child_variable Existing variable that will receive each child in turn
- */
-#define MojoForEachChildOfParent( container, parent, child_variable ) \
-for( int _i = ( container )._GetFirstIndexOf( parent ); \
-  ( container )._IsIndexValidOf( parent, _i ) ? \
-  ( child_variable = ( container )._GetValueAt( _i ), true ) : false; \
-  _i = ( container )._GetNextIndexOf( parent, _i ) )
 
 // ---------------------------------------------------------------------------------------------------------------

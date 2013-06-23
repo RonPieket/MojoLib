@@ -169,7 +169,7 @@ public:
    */
   key_T _GetKeyAt( int index ) const;
 
-  virtual void Enumerate( const MojoCollector< key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override;
   /** \private */
   virtual int _GetEnumerationCost() const override;
@@ -223,9 +223,10 @@ public:
   MojoSetCollector( MojoSet< value_T >* set )
   : m_Set( set )
   {}
-  virtual void Push( const value_T& value ) const override
+  virtual bool Push( const value_T& value ) const override
   {
     m_Set->Insert( value );
+    return true;
   }
 private:
   MojoSet< value_T >* m_Set;
@@ -675,27 +676,29 @@ MojoStatus MojoSet< key_T >::Shrink()
 }
 
 template< typename key_T >
-void MojoSet< key_T >::Enumerate( const MojoCollector< key_T >& collector,
+bool MojoSet< key_T >::Enumerate( const MojoCollector< key_T >& collector,
                                  const MojoAbstractSet< key_T >* limit ) const
 {
+  bool more = true;
   if( limit )
   {
-    for( int i = _GetFirstIndex(); _IsIndexValid( i ); i = _GetNextIndex( i ) )
+    for( int i = _GetFirstIndex(); more && _IsIndexValid( i ); i = _GetNextIndex( i ) )
     {
       key_T key = _GetKeyAt( i );
       if( limit->Contains( key ) )
       {
-        collector.Push( key );
+        more = collector.Push( key );
       }
     }
   }
   else
   {
-    for( int i = _GetFirstIndex(); _IsIndexValid( i ); i = _GetNextIndex( i ) )
+    for( int i = _GetFirstIndex(); more && _IsIndexValid( i ); i = _GetNextIndex( i ) )
     {
-      collector.Push( _GetKeyAt( i ) );
+      more = collector.Push( _GetKeyAt( i ) );
     }
   }
+  return more;
 }
 
 template< typename key_T >

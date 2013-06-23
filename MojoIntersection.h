@@ -69,7 +69,7 @@ public:
    */
   MojoIntersection& Add( const MojoAbstractSet< key_T >* s );
   virtual bool Contains( const key_T& key ) const override;
-  virtual void Enumerate( const MojoCollector< key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override;
   /** \private */
   virtual int _GetEnumerationCost() const override;
@@ -149,7 +149,7 @@ inline int MojoIntersection< key_T >::_GetChangeCount() const
 }
 
 template< typename key_T >
-inline void MojoIntersection< key_T >::Enumerate( const MojoCollector< key_T >& collector,
+inline bool MojoIntersection< key_T >::Enumerate( const MojoCollector< key_T >& collector,
                                                  const MojoAbstractSet< key_T >* limit ) const
 {
   MojoIntersection< key_T > combined_limit;
@@ -178,7 +178,7 @@ inline void MojoIntersection< key_T >::Enumerate( const MojoCollector< key_T >& 
     combined_limit.Add( limit );
   }
   
-  smaller->Enumerate( collector, &combined_limit );
+  return smaller->Enumerate( collector, &combined_limit );
 }
 
 // ---------------------------------------------------------------------------------------------------------------

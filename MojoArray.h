@@ -209,7 +209,7 @@ public:
    */
   virtual bool Contains( const value_T& value ) const override;
 
-  virtual void Enumerate( const MojoCollector< value_T >& collector,
+  virtual bool Enumerate( const MojoCollector< value_T >& collector,
                          const MojoAbstractSet< value_T >* limit = NULL ) const override;
   /** \private */
   virtual int _GetEnumerationCost() const override;
@@ -257,9 +257,10 @@ public:
   MojoArrayCollector( MojoArray< value_T >* array )
   : m_Array( array )
   {}
-  virtual void Push( const value_T& value ) const override
+  virtual bool Push( const value_T& value ) const override
   {
     m_Array->Push( value );
+    return true;
   }
 private:
   MojoArray< value_T >* m_Array;
@@ -685,27 +686,29 @@ bool MojoArray< value_T >::Contains( const value_T& value ) const
 }
 
 template< typename value_T >
-void MojoArray< value_T >::Enumerate( const MojoCollector< value_T >& collector,
+bool MojoArray< value_T >::Enumerate( const MojoCollector< value_T >& collector,
                                      const MojoAbstractSet< value_T >* limit ) const
 {
+  bool more = true;
   if( limit )
   {
-    for( int i = 0; i < m_ActiveCount; ++i )
+    for( int i = 0; more && i < m_ActiveCount; ++i )
     {
       value_T value = GetAt( i );
       if( limit->Contains( value ) )
       {
-        collector.Push( value );
+        more = collector.Push( value );
       }
     }
   }
   else
   {
-    for( int i = 0; i < m_ActiveCount; ++i )
+    for( int i = 0; more && i < m_ActiveCount; ++i )
     {
-      collector.Push( GetAt( i ) );
+      more = collector.Push( GetAt( i ) );
     }
   }
+  return more;
 }
 
 template< typename value_T >

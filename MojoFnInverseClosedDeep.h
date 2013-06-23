@@ -60,29 +60,44 @@ private:
     , m_Limit( limit )
     {}
     
-    virtual void Push( const key_T& key ) const override
+    virtual bool Push( const key_T& key ) const override
     {
-      key_T child;
+      bool more = true;
       int count = 0;
-      MojoForEachChildOfParent( *m_Relation, key, child )
+      // Key is a parent in the relation.
+      const MojoSet< key_T >* children = m_Relation->FindChildren( key );
+      if( children )
       {
-        count += 1;
-        if( m_Relation->ContainsParent( child ) )
+        key_T child;
+        MojoForEachKey( *children, child )
         {
-          Push( child );
-        }
-        if( !m_Limit || m_Limit->Contains( child ) )
-        {
-          m_Collector.Push( child );
+          count += 1;
+          if( m_Relation->ContainsParent( child ) )
+          {
+            more = Push( child );
+            if( !more )
+            {
+              break;
+            }
+          }
+          if( !m_Limit || m_Limit->Contains( child ) )
+          {
+            more = m_Collector.Push( child );
+            if( !more )
+            {
+              break;
+            }
+          }
         }
       }
-      if( !count )
+      if( more && !count )
       {
         if( !m_Limit || m_Limit->Contains( key ) )
         {
-          m_Collector.Push( key );
+          more = m_Collector.Push( key );
         }
       }
+      return more;
     }
   private:
     const MojoCollector< key_T >& m_Collector;
@@ -115,10 +130,10 @@ public:
     return !m_Relation->ContainsParent( key ) && m_Set->Contains( key );
   }
   
-  virtual void Enumerate( const MojoCollector< key_T >& collector,
+  virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override
   {
-    m_Set->Enumerate( Collector( collector, m_Relation, limit ) );
+    return m_Set->Enumerate( Collector( collector, m_Relation, limit ) );
   }
   
   /** \private */

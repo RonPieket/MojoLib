@@ -37,7 +37,7 @@
  - Default constructor that initializes a Null value
  - Equality operator
  - IsHashNull() member function returning `bool`
- - GetHash() member retirning `uint64_t`
+ - GetHash() member returning `uint64_t`
  \tparam value_T Value type
  */
 template< typename key_T, typename value_T >
