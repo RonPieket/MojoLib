@@ -394,7 +394,11 @@ int MojoSet< key_T >::GetCount() const
 template< typename key_T >
 int MojoSet< key_T >::_GetFirstIndex() const
 {
-  return _GetNextIndex( -1 );
+  if( m_ActiveCount > 0 )
+  {
+    return _GetNextIndex( -1 );
+  }
+  return m_TableCount;
 }
 
 template< typename key_T >
@@ -714,6 +718,81 @@ int MojoSet< key_T >::_GetChangeCount() const
 }
 
 // ---------------------------------------------------------------------------------------------------------------
+
+template< typename key_T >
+class MojoSetItor final
+{
+public:
+  MojoSetItor( const MojoSet< key_T >* set )
+  : m_Set( set )
+  , m_Count( 0 )
+  {}
+
+  MojoSetItor( const key_T& key )
+  : m_Set( NULL )
+  , m_Singleton( key )
+  , m_Count( key.IsHashNull() ? 0 : 1 )
+  {}
+
+  MojoSetItor()
+  : m_Set( NULL )
+  , m_Count( 0 )
+  {}
+
+  int _GetFirstIndex() const
+  {
+    return m_Set ? m_Set->_GetFirstIndex() : 0;
+  }
+
+  int _GetNextIndex( int index ) const
+  {
+    return m_Set ? m_Set->_GetNextIndex( index ) : 1;
+  }
+
+  bool _IsIndexValid( int index ) const
+  {
+    return m_Set ? m_Set->_IsIndexValid( index ) : ( index < m_Count );
+  }
+
+  key_T _GetKeyAt( int index ) const
+  {
+    return m_Set ? m_Set->_GetKeyAt( index ) : m_Singleton;
+  }
+
+private:
+  const MojoSet< key_T >* m_Set;
+  key_T                   m_Singleton;
+  int                     m_Count;
+};
+
+template< typename key_T >
+class MojoSetIterator final
+{
+public:
+  MojoSetIterator( const MojoSet< key_T >* set )
+  : m_Set( set )
+  , m_Index( set ? set->_GetFirstIndex() : 0 )
+  {}
+
+  bool IsValid() const
+  {
+    return m_Set && m_Set->_IsIndexValid( m_Index );
+  }
+
+  key_T GetKey() const
+  {
+    return m_Set->_GetKeyAt( m_Index );
+  }
+
+  void Next()
+  {
+    m_Index = m_Set->_GetNextIndex( m_Index );
+  }
+
+private:
+  const MojoSet< key_T >* m_Set;
+  int                     m_Index;
+};
 
 /**
  \ingroup group_container

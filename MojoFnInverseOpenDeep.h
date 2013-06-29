@@ -64,36 +64,31 @@ private:
     virtual bool Push( const key_T& key ) const override
     {
       bool more = true;
-      // Key is a parent in the relation.
-      const MojoSet< key_T >* children = m_Relation->FindChildren( key );
-      if( children )
+      for( MojoSetIterator< key_T > it( m_Relation->FindChildren( key ) ); it.IsValid(); it.Next() )
       {
-        key_T child;
-        MojoForEachKey( *children, child )
+        key_T child = it.GetKey();
+        if( m_Relation->ContainsParent( child ) )
         {
-          if( m_Relation->ContainsParent( child ) )
+          more = Push( child );
+          if( !more )
           {
-            more = Push( child );
-            if( !more )
-            {
-              break;
-            }
+            break;
           }
-          if( !m_Limit || m_Limit->Contains( child ) )
+        }
+        if( !m_Limit || m_Limit->Contains( child ) )
+        {
+          more = m_Collector.Push( child );
+          if( !more )
           {
-            more = m_Collector.Push( child );
-            if( !more )
-            {
-              break;
-            }
+            break;
           }
         }
       }
       return more;
     }
   private:
-    const MojoCollector< key_T >& m_Collector;
-    const MojoRelation< key_T, key_T >*  m_Relation;
+    const MojoCollector< key_T >&       m_Collector;
+    const MojoRelation< key_T, key_T >* m_Relation;
     const MojoAbstractSet< key_T >*     m_Limit;
   };
   
@@ -105,19 +100,19 @@ public:
    */
   MojoFnInverseOpenDeep( const MojoRelation< key_T, key_T >* relation, const MojoAbstractSet< key_T >* set )
   : m_Relation( relation )
-  , m_Set( set )
+  , m_InputSet( set )
   {}
   
   virtual bool Contains( const key_T& key ) const override
   {
     key_T parent = m_Relation->FindParent( key );
-    while( !parent.IsHashNull() )
+    if( !parent.IsHashNull() )
     {
-      if( m_Set->Contains( parent ) )
+      if( m_InputSet->Contains( parent ) )
       {
         return true;
       }
-      parent = m_Relation->FindParent( parent );
+      return Contains( parent );
     }
     return false;
   }
@@ -125,25 +120,25 @@ public:
   virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override
   {
-    return m_Set->Enumerate( Collector( collector, m_Relation, limit ) );
+    return m_InputSet->Enumerate( Collector( collector, m_Relation, limit ) );
   }
   
   /** \private */
   virtual int _GetEnumerationCost() const override
   {
-    return m_Set->_GetEnumerationCost();
+    return m_InputSet->_GetEnumerationCost();
   }
   
   /** \private */
   virtual int _GetChangeCount() const override
   {
-    return m_Set->_GetChangeCount() + m_Relation->_GetChangeCount();
+    return m_InputSet->_GetChangeCount() + m_Relation->_GetChangeCount();
   }
   
 private:
   
-  const MojoRelation< key_T, key_T >*  m_Relation;
-  const MojoAbstractSet< key_T >*     m_Set;
+  const MojoRelation< key_T, key_T >* m_Relation;
+  const MojoAbstractSet< key_T >*     m_InputSet;
 };
 
 // ---------------------------------------------------------------------------------------------------------------

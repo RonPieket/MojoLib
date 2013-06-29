@@ -33,7 +33,7 @@
  \ingroup group_set_common
  Abstract interface for an array-like container.
  This is used as receiver for the Enumerate() functions. It allows Enumerate() to push its output into an array,
- or into a set, or into your own custom receiver you desire. MojoArray and MojoSet provide specializations of this
+ or into a set, or into your own custom receiver. MojoArray and MojoSet provide specializations of this
  template. A custom specialization could be:
  \code
  class PrintIdCollector : MojoCollector< MojoId >
@@ -41,7 +41,7 @@
    virtual bool Push( const MojoId& id )
    {
      printf( "Pushing %s\n", id.AsCString() );
-     return true;
+     return true; // Continue
    }
  };
  \endcode

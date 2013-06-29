@@ -136,12 +136,16 @@ public:
    */
   parent_key_T FindParent( const child_key_T& child ) const;
 
+  const MojoSetItor< parent_key_T > GetParentItor( const child_key_T& child, const parent_key_T& backup_key = parent_key_T() ) const;
+
   /**
    Find set of children of given parent
    \param[in] parent Parent to look for.
    \return const MojoSet< child_key_T >*, or NULL.
    */
   const MojoSet< child_key_T >* FindChildren( const parent_key_T& parent ) const;
+
+  const MojoSetItor< child_key_T > GetChildItor( const parent_key_T& parent, const child_key_T& backup_key = child_key_T() ) const;
 
   /**
    Test presence of a child. If it is present, it means the child has a parent.
@@ -217,6 +221,10 @@ public:
   virtual int _GetChangeCount() const override;
 
   virtual ~MojoRelation();
+
+
+  const MojoAbstractSet< parent_key_T >* GetParentSet() const { return &m_ParentToChild; }
+  const MojoAbstractSet< child_key_T >* GetChildSet() const { return &m_ChildToParent; }
 
 private:
   
@@ -426,9 +434,37 @@ parent_key_T MojoRelation< child_key_T, parent_key_T >::FindParent( const child_
 }
 
 template< typename child_key_T, typename parent_key_T >
+const MojoSetItor< parent_key_T > MojoRelation< child_key_T, parent_key_T >::GetParentItor( const child_key_T& child, const parent_key_T& backup_key ) const
+{
+  parent_key_T parent = FindParent( child );
+  if( !parent.IsHashNull() )
+  {
+    return MojoSetItor< parent_key_T > ( parent );
+  }
+  else
+  {
+    return MojoSetItor< parent_key_T > ( backup_key );
+  }
+}
+
+template< typename child_key_T, typename parent_key_T >
 const MojoSet< child_key_T >* MojoRelation< child_key_T, parent_key_T >::FindChildren( const parent_key_T& parent ) const
 {
   return m_ParentToChild.Find( parent );
+}
+
+template< typename child_key_T, typename parent_key_T >
+const MojoSetItor< child_key_T > MojoRelation< child_key_T, parent_key_T >::GetChildItor( const parent_key_T& parent, const child_key_T& backup_key ) const
+{
+  const MojoSet< child_key_T >* children = FindChildren( parent );
+  if( children )
+  {
+    return MojoSetItor< child_key_T > ( children );
+  }
+  else
+  {
+    return MojoSetItor< child_key_T > ( backup_key );
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------------

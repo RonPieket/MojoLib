@@ -63,17 +63,25 @@ private:
     virtual bool Push( const key_T& key ) const override
     {
       bool more = true;
-      key_T parent = m_Relation->FindParent( key );
-      if( !parent.IsHashNull() && ( !m_Limit || m_Limit->Contains( parent ) ) )
+      MojoSetItor< key_T > parent_itor = m_Relation->GetParentItor( key );
+      key_T parent;
+      MojoForEachKey( parent_itor, parent )
       {
-        more = m_Collector.Push( parent );
+        if( !m_Limit || m_Limit->Contains( parent ) )
+        {
+          more = m_Collector.Push( parent );
+          if( !more )
+          {
+            break;
+          }
+        }
       }
       return more;
     }
   private:
-    const MojoCollector< key_T >&   m_Collector;
-    const MojoRelation< key_T, key_T >*    m_Relation;
-    const MojoAbstractSet< key_T >* m_Limit;
+    const MojoCollector< key_T >&       m_Collector;
+    const MojoRelation< key_T, key_T >* m_Relation;
+    const MojoAbstractSet< key_T >*     m_Limit;
   };
   
 public:
@@ -84,49 +92,37 @@ public:
    */
   MojoFnDirectOpenShallow( const MojoRelation< key_T, key_T >* relation, const MojoAbstractSet< key_T >* set )
   : m_Relation( relation )
-  , m_Set( set )
+  , m_InputSet( set )
   {}
   
   virtual bool Contains( const key_T& key ) const override
   {
-    // Key is a parent in the relation.
     const MojoSet< key_T >* children = m_Relation->FindChildren( key );
-    if( children )
-    {
-      key_T child;
-      MojoForEachKey( *children, child )
-      {
-        if( m_Set->Contains( child ) )
-        {
-          return true;
-        }
-      }
-    }
-    return false;
+    return children && !MojoAreDisjoint( children, m_InputSet );
   }
   
   virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override
   {
-    return m_Set->Enumerate( Collector( collector, m_Relation, limit ) );
+    return m_InputSet->Enumerate( Collector( collector, m_Relation, limit ) );
   }
   
   /** \private */
   virtual int _GetEnumerationCost() const override
   {
-    return m_Set->_GetEnumerationCost();
+    return m_InputSet->_GetEnumerationCost();
   }
   
   /** \private */
   virtual int _GetChangeCount() const override
   {
-    return m_Set->_GetChangeCount() + m_Relation->_GetChangeCount();
+    return m_InputSet->_GetChangeCount() + m_Relation->_GetChangeCount();
   }
   
 private:
   
-  const MojoRelation< key_T, key_T >*  m_Relation;
-  const MojoAbstractSet< key_T >*     m_Set;
+  const MojoRelation< key_T, key_T >* m_Relation;
+  const MojoAbstractSet< key_T >*     m_InputSet;
 };
 
 // ---------------------------------------------------------------------------------------------------------------

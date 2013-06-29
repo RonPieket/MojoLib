@@ -33,6 +33,8 @@
 #include "MojoCollector.h"
 #include "MojoUtil.h"
 
+#include "MojoFnInverseOpenDeep.h"
+
 /** \cond HIDE_FORWARD_REFERENCE */
 template< typename child_key_T, typename parent_key_T > class MojoRelation;
 /** \endcond */
@@ -48,110 +50,47 @@ template< typename key_T >
 class MojoFnInverseClosedDeep final : public MojoAbstractSet< key_T >
 {
 public:
-
-private:
-  class Collector final : public MojoCollector< key_T >
-  {
-  public:
-    Collector( const MojoCollector< key_T >& collector, const MojoRelation< key_T, key_T >* relation,
-              const MojoAbstractSet< key_T >* limit )
-    : m_Collector( collector )
-    , m_Relation( relation )
-    , m_Limit( limit )
-    {}
-    
-    virtual bool Push( const key_T& key ) const override
-    {
-      bool more = true;
-      int count = 0;
-      // Key is a parent in the relation.
-      const MojoSet< key_T >* children = m_Relation->FindChildren( key );
-      if( children )
-      {
-        key_T child;
-        MojoForEachKey( *children, child )
-        {
-          count += 1;
-          if( m_Relation->ContainsParent( child ) )
-          {
-            more = Push( child );
-            if( !more )
-            {
-              break;
-            }
-          }
-          if( !m_Limit || m_Limit->Contains( child ) )
-          {
-            more = m_Collector.Push( child );
-            if( !more )
-            {
-              break;
-            }
-          }
-        }
-      }
-      if( more && !count )
-      {
-        if( !m_Limit || m_Limit->Contains( key ) )
-        {
-          more = m_Collector.Push( key );
-        }
-      }
-      return more;
-    }
-  private:
-    const MojoCollector< key_T >& m_Collector;
-    const MojoRelation< key_T, key_T >*  m_Relation;
-    const MojoAbstractSet< key_T >*     m_Limit;
-  };
-  
-public:
   /**
    Construct from a MojoRelation and a MojoAbstractSet object.
    \param[in] relation The relation that defines the function.
    \param[in] set The set to be transformed by the function.
    */
   MojoFnInverseClosedDeep( const MojoRelation< key_T, key_T >* relation, const MojoAbstractSet< key_T >* set )
-  : m_Relation( relation )
-  , m_Set( set )
+  : m_Childless( relation->GetParentSet() )
+  , m_ChildlessInput( &m_Childless, set )
+  , m_FnOpen( relation, set )
+  , m_Union( &m_FnOpen, &m_ChildlessInput )
   {}
-  
+
   virtual bool Contains( const key_T& key ) const override
   {
-    key_T parent = m_Relation->FindParent( key );
-    while( !parent.IsHashNull() )
-    {
-      if( m_Set->Contains( parent ) )
-      {
-        return true;
-      }
-      parent = m_Relation->FindParent( parent );
-    }
-    return !m_Relation->ContainsParent( key ) && m_Set->Contains( key );
+    return m_Union.Contains( key );
   }
-  
+
   virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const override
   {
-    return m_Set->Enumerate( Collector( collector, m_Relation, limit ) );
+    return m_Union.Enumerate( collector, limit );
   }
-  
+
   /** \private */
   virtual int _GetEnumerationCost() const override
   {
-    return m_Set->_GetEnumerationCost();
+    return m_Union._GetEnumerationCost();
   }
-  
+
   /** \private */
   virtual int _GetChangeCount() const override
   {
-    return m_Set->_GetChangeCount() + m_Relation->_GetChangeCount();
+    return m_Union._GetChangeCount();
   }
-  
+
 private:
-  
-  const MojoRelation< key_T, key_T >*  m_Relation;
-  const MojoAbstractSet< key_T >*     m_Set;
+
+  MojoComplement< key_T >             m_Childless;
+  MojoIntersection< key_T >           m_ChildlessInput;
+  MojoFnInverseOpenDeep< key_T >      m_FnOpen;
+  MojoUnion< key_T >                  m_Union;
 };
 
 // ---------------------------------------------------------------------------------------------------------------

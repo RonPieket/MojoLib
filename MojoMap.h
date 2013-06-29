@@ -456,7 +456,11 @@ int MojoMap< key_T, value_T >::GetCount() const
 template< typename key_T, typename value_T >
 int MojoMap< key_T, value_T >::_GetFirstIndex() const
 {
-  return _GetNextIndex( -1 );
+  if( m_ActiveCount > 0 )
+  {
+    return _GetNextIndex( -1 );
+  }
+  return m_TableCount;
 }
 
 template< typename key_T, typename value_T >

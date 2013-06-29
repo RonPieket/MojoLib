@@ -936,14 +936,14 @@ REGISTER_UNIT_TEST( MojoEqualityTest, Boolean )
   second.Insert( "deux" );
   second.Insert( "trois" );
 
-  EXPECT_TRUE( MojoEqualTo( &first, &first ) );
-  EXPECT_TRUE( MojoEqualTo( &first, &equal_to_first ) );
-  EXPECT_FALSE( MojoEqualTo( &first, &super_of_first ) );
-  EXPECT_FALSE( MojoEqualTo( &super_of_first, &first ) );
-  EXPECT_TRUE( MojoSubsetOf( &first, &super_of_first ) );
-  EXPECT_TRUE( MojoSupersetOf( &super_of_first, &first ) );
-  EXPECT_FALSE( MojoSubsetOf( &second, &super_of_first ) );
-  EXPECT_FALSE( MojoSupersetOf( &super_of_first, &second ) );
+  EXPECT_TRUE( MojoAreEquivalent( &first, &first ) );
+  EXPECT_TRUE( MojoAreEquivalent( &first, &equal_to_first ) );
+  EXPECT_FALSE( MojoAreEquivalent( &first, &super_of_first ) );
+  EXPECT_FALSE( MojoAreEquivalent( &super_of_first, &first ) );
+  EXPECT_TRUE( MojoIsSubsetOf( &first, &super_of_first ) );
+  EXPECT_TRUE( MojoIsSupersetOf( &super_of_first, &first ) );
+  EXPECT_FALSE( MojoIsSubsetOf( &second, &super_of_first ) );
+  EXPECT_FALSE( MojoIsSupersetOf( &super_of_first, &second ) );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -1018,7 +1018,7 @@ REGISTER_UNIT_TEST( MojoFnTest, Function )
       MojoAbstractSet< MojoHash< char > >* func = MakeFn( variation, &relation, &input_set );
       MojoSet< MojoHash< char > > output_set( "output" );
       func->Enumerate( MojoSetCollector< MojoHash< char > >( &output_set ) );
-      EXPECT_TRUE( MojoEqualTo( &output_set, func ) );
+      EXPECT_TRUE( MojoAreEquivalent( &output_set, func ) );
 
       // Verify that we got what we expected.
       for( int k = 0; k < 5; ++k )

@@ -67,18 +67,18 @@ public:
 // ---------------------------------------------------------------------------------------------------------------
 
 /**
- \class MojoTestCollector
+ \class MojoEqualityCollector
  Specialization of MojoCollector, with MojoSet as receiver.
  */
 template< typename value_T >
-class MojoTestCollector final : public MojoCollector< value_T >
+class MojoEqualityCollector final : public MojoCollector< value_T >
 {
 public:
   /**
    Construct from a MojoSet pointer.
    \param[in] set The set to receive data.
    */
-  MojoTestCollector( const MojoAbstractSet< value_T >* set )
+  MojoEqualityCollector( const MojoAbstractSet< value_T >* set )
   : m_Set( set )
   {}
   virtual bool Push( const value_T& value ) const override
@@ -89,27 +89,63 @@ private:
   const MojoAbstractSet< value_T >* m_Set;
 };
 
-template< typename key_T >
-bool MojoSubsetOf( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
+template< typename value_T >
+class MojoInequalityCollector final : public MojoCollector< value_T >
 {
-  MojoTestCollector< key_T > collector( second );
+public:
+  /**
+   Construct from a MojoSet pointer.
+   \param[in] set The set to receive data.
+   */
+  MojoInequalityCollector( const MojoAbstractSet< value_T >* set )
+  : m_Set( set )
+  {}
+  virtual bool Push( const value_T& value ) const override
+  {
+    return !m_Set->Contains( value );
+  }
+private:
+  const MojoAbstractSet< value_T >* m_Set;
+};
+
+template< typename key_T >
+bool MojoIsSubsetOf( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
+{
+  MojoEqualityCollector< key_T > collector( second );
   return first->Enumerate( collector );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
 
 template< typename key_T >
-bool MojoSupersetOf( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
+bool MojoIsSupersetOf( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
 {
-  return MojoSubsetOf( second, first );
+  return MojoIsSubsetOf( second, first );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
 
 template< typename key_T >
-bool MojoEqualTo( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
+bool MojoAreEquivalent( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
 {
-  return MojoSubsetOf( first, second ) && MojoSubsetOf( second, first );
+  return MojoIsSubsetOf( first, second ) && MojoIsSubsetOf( second, first );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+
+template< typename key_T >
+bool MojoAreDisjoint( const MojoAbstractSet< key_T >* first, const MojoAbstractSet< key_T >* second )
+{
+  if( first->_GetEnumerationCost() < second->_GetEnumerationCost() )
+  {
+    MojoInequalityCollector< key_T > collector( second );
+    return first->Enumerate( collector );
+  }
+  else
+  {
+    MojoInequalityCollector< key_T > collector( first );
+    return second->Enumerate( collector );
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
