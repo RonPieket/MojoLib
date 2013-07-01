@@ -58,15 +58,6 @@
 #include "MojoComplement.h"
 
 // -- Set Functions
-#include "MojoFnDirectOpenShallow.h"
-#include "MojoFnDirectOpenDeep.h"
-#include "MojoFnDirectClosedShallow.h"
-#include "MojoFnDirectClosedDeep.h"
-#include "MojoFnInverseOpenShallow.h"
-#include "MojoFnInverseOpenDeep.h"
-#include "MojoFnInverseClosedShallow.h"
-#include "MojoFnInverseClosedDeep.h"
-
 #include "MojoFunction.h"
 #include "MojoFunctionDeep.h"
 

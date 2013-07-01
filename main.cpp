@@ -958,117 +958,13 @@ REGISTER_UNIT_TEST( MojoEqualityTest, Boolean )
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-/*
- See illustration on the Set Functions documentation page. The test uses the relation and input sets that are used
- in the pictures.
- The table is organized as follows. Each of the eight rows corresponds to one of the eight variations. Each column
- represents an output key: A, B, C, D, and E. The string for each output key contains all th einput keys that will
- cause the output key to be included.
- For example, the second entry in the first row id "AC". The fact that it's the first row means that this is about
- the MojoFnDirectOpenShallow variation. The fact that it's the second entry means this is about output key 'B'.
- The string "AC" means that 'B' should only be in the output if either 'A' or 'C' are in the input.
- */
-
-static const char* g_FuncTestInfo[ 8 ][ 5 ] =
-{
-  { "", "AC", "D", "", "" },    // MojoFnDirectOpenShallow
-  { "", "ACD", "D", "", "" },   // MojoFnDirectOpenDeep
-  { "", "ABC", "D", "", "E" },  // MojoFnDirectClosedShallow
-  { "", "ABCD", "D", "", "E" }, // MojoFnDirectClosedDeep
-  { "B", "", "B", "C", "" },    // MojoFnInverseOpenShallow
-  { "B", "", "B", "BC", "" },   // MojoFnInverseOpenDeep
-  { "AB", "", "B", "CD", "E" }, // MojoFnInverseClosedShallow
-  { "AB", "", "B", "BCD", "E" },// MojoFnInverseClosedDeep
-};
-
-
-template<typename key_T >
-MojoAbstractSet< key_T >* MakeFn( int mode, const MojoRelation< key_T, key_T >* relation,
-                                 const MojoAbstractSet< key_T >* set )
-{
-  switch( mode )
-  {
-    case 0:   return new MojoFnDirectOpenShallow    < key_T >( relation, set );
-    case 1:   return new MojoFnDirectOpenDeep       < key_T >( relation, set );
-    case 2:   return new MojoFnDirectClosedShallow  < key_T >( relation, set );
-    case 3:   return new MojoFnDirectClosedDeep     < key_T >( relation, set );
-    case 4:   return new MojoFnInverseOpenShallow   < key_T >( relation, set );
-    case 5:   return new MojoFnInverseOpenDeep      < key_T >( relation, set );
-    case 6:   return new MojoFnInverseClosedShallow < key_T >( relation, set );
-    case 7:   return new MojoFnInverseClosedDeep    < key_T >( relation, set );
-    default:  return NULL;
-  }
-}
-
-
-REGISTER_UNIT_TEST( MojoFnTest, Function )
-{
-  MojoRelation< MojoHash< char >, MojoHash< char > > relation( "parent-child" );
-  
-  relation.InsertChildParent( 'A', 'B' );
-  relation.InsertChildParent( 'C', 'B' );
-  relation.InsertChildParent( 'D', 'C' );
-  
-  for( int i = 0; i < 32; ++i )
-  {
-    MojoSet< MojoHash< char > > input_set( "input" );
-    
-    // Every iteration, a different subset of elements A, B, C, D, and E
-    for( int j = 0; j < 5; ++j )
-    {
-      if( i & ( 1 << j ) )
-      {
-        char c = 'A' + j;
-        input_set.Insert( c );
-      }
-    }
-    
-    // Test all 8 function modes
-    for( int variation = 0; variation < 8; ++variation )
-    {
-      MojoAbstractSet< MojoHash< char > >* func = MakeFn( variation, &relation, &input_set );
-      MojoSet< MojoHash< char > > output_set( "output" );
-      func->Enumerate( MojoSetCollector< MojoHash< char > >( &output_set ) );
-      EXPECT_TRUE( MojoAreEquivalent( &output_set, func ) );
-
-      // Verify that we got what we expected.
-      for( int k = 0; k < 5; ++k )
-      {
-        const char* p = g_FuncTestInfo[ variation ][ k ];
-        char c = k + 'A';
-        bool expected = false;
-        while( *p )
-        {
-          if( input_set.Contains( *p ) )
-          {
-            expected = true;
-          }
-          p += 1;
-        }
-        EXPECT_BOOL( expected, output_set.Contains( c ) );
-        EXPECT_BOOL( expected, func->Contains( c ) );
-      }
-      delete func;
-    }
-  }
-}
-
-class PrintIdCollector : public MojoCollector< MojoId >
-{
-public:
-  virtual bool Push( const MojoId& id ) const
-  {
-    printf( "%s ", id.AsCString() );
-    return true;
-  }
-};
 
 REGISTER_UNIT_TEST( MojoFunctionTest, Function )
 {
   MojoMultiMap< MojoId, MojoId > multi_map( "multi_map" );
   MojoSet< MojoId > input_set( "input_set" );
-  MojoSet< MojoId > verify_deep_set( "verify_deep_set" );
-  MojoSet< MojoId > verify_shallow_set( "verify_shallow_set" );
+  MojoSet< MojoId > verify_deep( "verify_deep" );
+  MojoSet< MojoId > verify_shallow( "verify_shallow" );
 
   MojoFunctionDeep< MojoId > fn_deep( &input_set, &multi_map );
   MojoFunction< MojoId, MojoId > fn_shallow( &input_set, &multi_map );
@@ -1099,14 +995,14 @@ REGISTER_UNIT_TEST( MojoFunctionTest, Function )
   bool result_shallow[] =
   { false, false, false, true, true, true, false, false, false, true, true, true, false, false, false };
 
-  fn_deep.Enumerate( MojoSetCollector< MojoId >( &verify_deep_set ) );
-  fn_shallow.Enumerate( MojoSetCollector< MojoId >( &verify_shallow_set ) );
+  fn_deep.Enumerate( MojoSetCollector< MojoId >( &verify_deep ) );
+  fn_shallow.Enumerate( MojoSetCollector< MojoId >( &verify_shallow ) );
 
   for( int i = 0; i < ARRAY_SIZE( all ); ++i )
   {
     MojoId id = all[ i ];
-    EXPECT_BOOL( result_deep[ i ],    verify_deep_set.Contains( id ) );
-    EXPECT_BOOL( result_shallow[ i ], verify_shallow_set.Contains( id ) );
+    EXPECT_BOOL( result_deep[ i ],    verify_deep.Contains( id ) );
+    EXPECT_BOOL( result_shallow[ i ], verify_shallow.Contains( id ) );
     EXPECT_BOOL( result_deep[ i ],    fn_deep.Contains( id ) );
     EXPECT_BOOL( result_shallow[ i ], fn_shallow.Contains( id ) );
   }
