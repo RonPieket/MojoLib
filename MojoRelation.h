@@ -45,7 +45,7 @@
  \tparam key_T Key type. Must be hashable.
  */
 template< typename child_key_T, typename parent_key_T >
-class MojoRelation final : public MojoAbstractSet< child_key_T >
+class MojoRelation final
 {
 public:
   /**
@@ -134,7 +134,7 @@ public:
    \param[in] child Child to look for.
    \return Parent of the child, or not_found_value.
    */
-  parent_key_T FindParent( const child_key_T& child ) const;
+  const MojoSet< parent_key_T >* FindParents( const child_key_T& child ) const;
 
   const MojoSetItor< parent_key_T > GetParentItor( const child_key_T& child, const parent_key_T& backup_key = parent_key_T() ) const;
 
@@ -152,7 +152,7 @@ public:
    \param[in] child Child to look for.
    \return true if child has a parent.
    */
-  virtual bool Contains( const child_key_T& child ) const override;
+  bool ContainsChild( const child_key_T& child ) const;
   
   /**
    Test presence of a parent. If it is present, it means the parent has at least one child.
@@ -160,12 +160,7 @@ public:
    \return true if parent has a child.
    */
   bool ContainsParent( const parent_key_T& parent ) const;
-  
-  /**
-   Square bracket operator is an alias for FindParent()
-   */
-  parent_key_T operator[]( const child_key_T& child ) const { return FindParent( child ); }
-  
+
   /**
    Return table status state. This is the only way to find out if something went wrong in the default constructor.
    If Create() was used, the returned status code will be the same.
@@ -185,51 +180,17 @@ public:
    */
   const char* GetName() const { return m_Name; }
   
-  /**
-   Get index of first occupied slot in table. This is used for the ForEach... macros. It must be declared public
-   to work with the macros, but should be considered private.
-   \private
-   */
-  int _GetFirstIndex() const;
-
-  /**
-   Get index of next occupied slot in table. This is used for the ForEach... macros. It must be declared public to
-   work with the macros, but should be considered private.
-   \private
-   */
-  int _GetNextIndex( int index ) const;
-
-  /**
-   Verify that table index is in range. This is used for the ForEach... macros. It must be declared public to work
-   with the macros, but should be considered private.
-   \private
-   */
-  bool _IsIndexValid( int index ) const;
-  
-  /**
-   Get key at a specific index in the table. This is used for the ForEach... macros. It must be declared public to
-   work with the macros, but should be considered private.
-   \private
-   */
-  child_key_T _GetKeyAt( int index ) const;
-
-  virtual bool Enumerate( const MojoCollector< child_key_T >& collector,
-                         const MojoAbstractSet< child_key_T >* limit = NULL ) const override;
-  /** \private */
-  virtual int _GetEnumerationCost() const override;
-  /** \private */
-  virtual int _GetChangeCount() const override;
-
   virtual ~MojoRelation();
 
+  const MojoMultiMap< parent_key_T, child_key_T >* GetParentToChildMultiMap() const { return &m_ParentToChild; }
+  const MojoMultiMap< child_key_T, parent_key_T >* GetChildToParentMultiMap() const { return &m_ChildToParent; }
 
-  const MojoAbstractSet< parent_key_T >* GetParentSet() const { return &m_ParentToChild; }
-  const MojoAbstractSet< child_key_T >* GetChildSet() const { return &m_ChildToParent; }
+  int _GetChangeCount() const { return m_ChildToParent._GetChangeCount() + m_ParentToChild._GetChangeCount(); }
 
 private:
   
   const char*                               m_Name;
-  MojoMap< child_key_T, parent_key_T >      m_ChildToParent;  // A child may have only one parent
+  MojoMultiMap< child_key_T, parent_key_T > m_ChildToParent;  // A child may have only one parent
   MojoMultiMap< parent_key_T, child_key_T > m_ParentToChild;  // A parent may have multiple children
 
   void Init();
@@ -319,11 +280,16 @@ MojoStatus MojoRelation< child_key_T, parent_key_T >::RemoveChild( const child_k
 {
   if( !child.IsHashNull() )
   {
-    parent_key_T old_parent = m_ChildToParent.Remove( child );
-    if( !old_parent.IsHashNull() )
+    const MojoSet< parent_key_T >* parents = m_ChildToParent.Find( child );
+    if( parents )
     {
-      return m_ParentToChild.Remove( old_parent, child );
+      parent_key_T parent;
+      MojoForEachKey( *parents, parent )
+      {
+        m_ParentToChild.Remove( parent, child );
+      }
     }
+    return m_ChildToParent.Remove( child );
   }
   return kMojoStatus_NotFound;
 }
@@ -333,13 +299,13 @@ MojoStatus MojoRelation< child_key_T, parent_key_T >::RemoveParent( const parent
 {
   if( !parent.IsHashNull() )
   {
-    const MojoSet< child_key_T >* children = FindChildren( parent );
+    const MojoSet< child_key_T >* children = m_ParentToChild.Find( parent );
     if( children )
     {
       child_key_T child;
       MojoForEachKey( *children, child )
       {
-        m_ChildToParent.Remove( child );
+        m_ChildToParent.Remove( child, parent );
       }
     }
     return m_ParentToChild.Remove( parent );
@@ -354,7 +320,7 @@ bool MojoRelation< child_key_T, parent_key_T >::ContainsParent( const parent_key
 }
 
 template< typename child_key_T, typename parent_key_T >
-bool MojoRelation< child_key_T, parent_key_T >::Contains( const child_key_T& child ) const
+bool MojoRelation< child_key_T, parent_key_T >::ContainsChild( const child_key_T& child ) const
 {
   return m_ChildToParent.Contains( child );
 }
@@ -366,69 +332,7 @@ int MojoRelation< child_key_T, parent_key_T >::GetCount() const
 }
 
 template< typename child_key_T, typename parent_key_T >
-int MojoRelation< child_key_T, parent_key_T >::_GetFirstIndex() const
-{
-  return m_ChildToParent._GetFirstIndex();
-}
-
-template< typename child_key_T, typename parent_key_T >
-int MojoRelation< child_key_T, parent_key_T >::_GetNextIndex( int index ) const
-{
-  return m_ChildToParent._GetNextIndex( index );
-}
-
-template< typename child_key_T, typename parent_key_T >
-bool MojoRelation< child_key_T, parent_key_T >::_IsIndexValid( int index ) const
-{
-  return m_ChildToParent._IsIndexValid( index );
-}
-
-template< typename child_key_T, typename parent_key_T >
-child_key_T MojoRelation< child_key_T, parent_key_T >::_GetKeyAt( int index ) const
-{
-  return m_ChildToParent._GetKeyAt( index );
-}
-
-template< typename child_key_T, typename parent_key_T >
-bool MojoRelation< child_key_T, parent_key_T >::Enumerate( const MojoCollector< child_key_T >& collector,
-                                      const MojoAbstractSet< child_key_T >* limit ) const
-{
-  bool more = true;
-  if( limit )
-  {
-    for( int i = _GetFirstIndex(); more && _IsIndexValid( i ); i = _GetNextIndex( i ) )
-    {
-      child_key_T key = _GetKeyAt( i );
-      if( limit->Contains( key ) )
-      {
-        more = collector.Push( key );
-      }
-    }
-  }
-  else
-  {
-    for( int i = _GetFirstIndex(); more && _IsIndexValid( i ); i = _GetNextIndex( i ) )
-    {
-      more = collector.Push( _GetKeyAt( i ) );
-    }
-  }
-  return more;
-}
-
-template< typename child_key_T, typename parent_key_T >
-int MojoRelation< child_key_T, parent_key_T >::_GetEnumerationCost() const
-{
-  return GetCount();
-}
-
-template< typename child_key_T, typename parent_key_T >
-int MojoRelation< child_key_T, parent_key_T >::_GetChangeCount() const
-{
-  return m_ChildToParent._GetChangeCount();
-}
-
-template< typename child_key_T, typename parent_key_T >
-parent_key_T MojoRelation< child_key_T, parent_key_T >::FindParent( const child_key_T& child ) const
+const MojoSet< parent_key_T >* MojoRelation< child_key_T, parent_key_T >::FindParents( const child_key_T& child ) const
 {
   return m_ChildToParent.Find( child );
 }
@@ -436,10 +340,10 @@ parent_key_T MojoRelation< child_key_T, parent_key_T >::FindParent( const child_
 template< typename child_key_T, typename parent_key_T >
 const MojoSetItor< parent_key_T > MojoRelation< child_key_T, parent_key_T >::GetParentItor( const child_key_T& child, const parent_key_T& backup_key ) const
 {
-  parent_key_T parent = FindParent( child );
-  if( !parent.IsHashNull() )
+  const MojoSet< parent_key_T >* parents = FindParents( child );
+  if( parents )
   {
-    return MojoSetItor< parent_key_T > ( parent );
+    return MojoSetItor< parent_key_T > ( parents );
   }
   else
   {

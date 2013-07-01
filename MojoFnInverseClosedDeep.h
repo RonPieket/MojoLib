@@ -33,7 +33,7 @@
 #include "MojoCollector.h"
 #include "MojoUtil.h"
 
-#include "MojoFnInverseOpenDeep.h"
+#include "MojoFunctionDeep.h"
 
 /** \cond HIDE_FORWARD_REFERENCE */
 template< typename child_key_T, typename parent_key_T > class MojoRelation;
@@ -56,10 +56,10 @@ public:
    \param[in] set The set to be transformed by the function.
    */
   MojoFnInverseClosedDeep( const MojoRelation< key_T, key_T >* relation, const MojoAbstractSet< key_T >* set )
-  : m_Childless( relation->GetParentSet() )
+  : m_Childless( relation->GetParentToChildMultiMap() )
   , m_ChildlessInput( &m_Childless, set )
-  , m_FnOpen( relation, set )
-  , m_Union( &m_FnOpen, &m_ChildlessInput )
+  , m_Function( set, relation->GetParentToChildMultiMap() )
+  , m_Union( &m_Function, &m_ChildlessInput )
   {}
 
   virtual bool Contains( const key_T& key ) const override
@@ -87,10 +87,10 @@ public:
 
 private:
 
-  MojoComplement< key_T >             m_Childless;
-  MojoIntersection< key_T >           m_ChildlessInput;
-  MojoFnInverseOpenDeep< key_T >      m_FnOpen;
-  MojoUnion< key_T >                  m_Union;
+  const MojoComplement< key_T >   m_Childless;
+  const MojoIntersection< key_T > m_ChildlessInput;
+  const MojoFunctionDeep< key_T > m_Function;
+  const MojoUnion< key_T >        m_Union;
 };
 
 // ---------------------------------------------------------------------------------------------------------------

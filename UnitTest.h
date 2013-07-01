@@ -45,7 +45,7 @@ public:
 
 protected:
   void ExpectString( const char* expect, const char* got, int line );
-  void ExpectNotNull( const char* got, int line );
+  void ExpectNotNull( const void* got, int line );
   void ExpectFloat( float expect, float got, int line );
   void ExpectEpsilon( float expect, float got, int line );
   void ExpectInt( int expect, int got, int line );
@@ -67,7 +67,7 @@ private:
 };
 
 #define EXPECT_STRING( expect, got ) ExpectString( expect, got, __LINE__ );
-#define EXPECT_NOT_NULL( got ) ExpectNotNull( got, __LINE__ );
+#define EXPECT_NOT_NULL( got ) ExpectNotNull( ( const void* )( got ), __LINE__ );
 #define EXPECT_FLOAT( expect, got ) ExpectFloat( expect, got, __LINE__ );
 #define EXPECT_EPSILON( expect, got ) ExpectEpsilon( expect, got, __LINE__ );
 #define EXPECT_INT( expect, got ) ExpectInt( expect, got, __LINE__ );

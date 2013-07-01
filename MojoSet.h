@@ -141,6 +141,8 @@ public:
    */
   const char* GetName() const { return m_Name; }
 
+  key_T GetOnlyElement() const { return m_ActiveCount == 1 ? _GetKeyAt( _GetFirstIndex() ) : key_T(); }
+
   /**
    Get index of first occupied slot in table. This is used for the ForEach... macros. It must be declared public
    to work with the macros, but should be considered private.

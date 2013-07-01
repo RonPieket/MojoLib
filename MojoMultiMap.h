@@ -415,7 +415,7 @@ bool MojoMultiMap< key_T, value_T >::Contains( const key_T& key, const value_T& 
 template< typename key_T, typename value_T >
 int MojoMultiMap< key_T, value_T >::GetCount() const
 {
-  return m_Map->GetCount();
+  return m_Map.GetCount();
 }
 
 template< typename key_T, typename value_T >

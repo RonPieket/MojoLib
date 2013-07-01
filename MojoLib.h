@@ -57,7 +57,7 @@
 #include "MojoDifference.h"
 #include "MojoComplement.h"
 
-// -- Transformational Sets
+// -- Set Functions
 #include "MojoFnDirectOpenShallow.h"
 #include "MojoFnDirectOpenDeep.h"
 #include "MojoFnDirectClosedShallow.h"
@@ -66,5 +66,8 @@
 #include "MojoFnInverseOpenDeep.h"
 #include "MojoFnInverseClosedShallow.h"
 #include "MojoFnInverseClosedDeep.h"
+
+#include "MojoFunction.h"
+#include "MojoFunctionDeep.h"
 
 // ---------------------------------------------------------------------------------------------------------------

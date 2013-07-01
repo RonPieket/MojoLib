@@ -46,6 +46,12 @@
 
 // ---------------------------------------------------------------------------------------------------------------
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE( r ) ( sizeof( r ) / sizeof( *( r ) ) )
+#endif
+
+// ---------------------------------------------------------------------------------------------------------------
+
 static uint32_t Random()
 {
   return ( rand() << 16 ) | rand();
@@ -612,9 +618,14 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     for( int i = 1; i < n; i += 2 )
     {
       MojoId child = MakeId( group, i );
-      MojoId found_parent = rel.FindParent( child );
-      EXPECT_BOOL( false, found_parent.IsNull() );
-      EXPECT_STRING( parent.AsCString(), found_parent.AsCString() );
+      const MojoSet< MojoId >* parents = rel.FindParents( child );
+      EXPECT_TRUE( parents != NULL );
+      if( parents )
+      {
+        EXPECT_INT( 1, parents->GetCount() );
+        MojoId found_parent = parents->GetOnlyElement();
+        EXPECT_STRING( parent.AsCString(), found_parent.AsCString() );
+      }
     }
   }
   
@@ -627,8 +638,8 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     for( int i = 0; i < n; i += 2 )
     {
       MojoId child = MakeId( group, i );
-      MojoId found_parent = rel.FindParent( child );
-      EXPECT_BOOL( true, found_parent.IsNull() );
+      const MojoSet< MojoId >* parents = rel.FindParents( child );
+      EXPECT_TRUE( parents == NULL );
     }
   }
   
@@ -641,8 +652,8 @@ REGISTER_UNIT_TEST( MojoRelationTest, Container )
     for( int i = 0; i < n; i += 1 )
     {
       MojoId child = MakeId( group, i );
-      MojoId found_parent = rel.FindParent( child );
-      EXPECT_BOOL( true, found_parent.IsNull() );
+      const MojoSet< MojoId >* parents = rel.FindParents( child );
+      EXPECT_TRUE( parents == NULL );
     }
   }
 
@@ -1039,6 +1050,65 @@ REGISTER_UNIT_TEST( MojoFnTest, Function )
       }
       delete func;
     }
+  }
+}
+
+class PrintIdCollector : public MojoCollector< MojoId >
+{
+public:
+  virtual bool Push( const MojoId& id ) const
+  {
+    printf( "%s ", id.AsCString() );
+    return true;
+  }
+};
+
+REGISTER_UNIT_TEST( MojoFunctionTest, Function )
+{
+  MojoMultiMap< MojoId, MojoId > multi_map( "multi_map" );
+  MojoSet< MojoId > input_set( "input_set" );
+  MojoSet< MojoId > verify_deep_set( "verify_deep_set" );
+  MojoSet< MojoId > verify_shallow_set( "verify_shallow_set" );
+
+  MojoFunctionDeep< MojoId > fn_deep( &input_set, &multi_map );
+  MojoFunction< MojoId, MojoId > fn_shallow( &input_set, &multi_map );
+
+  multi_map.Insert( "A", "A1" );  // A -> (A1,A2,A3)
+  multi_map.Insert( "A", "A2" );
+  multi_map.Insert( "A", "A3" );
+
+  multi_map.Insert( "B", "B1" );  // B -> (B1,B2,B3)
+  multi_map.Insert( "B", "B2" );
+  multi_map.Insert( "B", "B3" );
+
+  multi_map.Insert( "C", "C1" );  // C -> (C1,C2,C3)
+  multi_map.Insert( "C", "C2" );
+  multi_map.Insert( "C", "C3" );
+
+  multi_map.Insert( "A2", "A2x" );  // A2 -> (A2x)
+  multi_map.Insert( "C3", "C3x" );  // C3 -> (C3x,C3y)
+  multi_map.Insert( "C3", "C3y" );
+
+  input_set.Insert( "A" );
+  input_set.Insert( "C" );
+
+  const char* all[] =
+  { "A",   "B",   "C",   "A1", "A2", "A3", "B1",  "B2",  "B3",  "C1", "C2", "C3", "A2x", "C3x", "C3y" };
+  bool result_deep[] =
+  { false, false, false, true, true, true, false, false, false, true, true, true, true,  true,  true  };
+  bool result_shallow[] =
+  { false, false, false, true, true, true, false, false, false, true, true, true, false, false, false };
+
+  fn_deep.Enumerate( MojoSetCollector< MojoId >( &verify_deep_set ) );
+  fn_shallow.Enumerate( MojoSetCollector< MojoId >( &verify_shallow_set ) );
+
+  for( int i = 0; i < ARRAY_SIZE( all ); ++i )
+  {
+    MojoId id = all[ i ];
+    EXPECT_BOOL( result_deep[ i ],    verify_deep_set.Contains( id ) );
+    EXPECT_BOOL( result_shallow[ i ], verify_shallow_set.Contains( id ) );
+    EXPECT_BOOL( result_deep[ i ],    fn_deep.Contains( id ) );
+    EXPECT_BOOL( result_shallow[ i ], fn_shallow.Contains( id ) );
   }
 }
 

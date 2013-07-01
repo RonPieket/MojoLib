@@ -200,7 +200,7 @@ void UnitTest::ExpectString( const char* expect, const char* got, int line )
   }
 }
 
-void UnitTest::ExpectNotNull( const char* got, int line )
+void UnitTest::ExpectNotNull( const void* got, int line )
 {
   bool success = ( got != NULL );
   if( !success )
