@@ -56,10 +56,9 @@ public:
    \param[in] set The set to be transformed by the function.
    */
   MojoFnInverseClosedShallow( const MojoRelation< key_T, key_T >* relation, const MojoAbstractSet< key_T >* set )
-  : m_Childless( relation->GetParentToChildMultiMap() )
-  , m_ChildlessInput( &m_Childless, set )
+  : m_Childless( set, relation->GetParentToChildMultiMap() )
   , m_Function( set, relation->GetParentToChildMultiMap() )
-  , m_Union( &m_Function, &m_ChildlessInput )
+  , m_Union( &m_Function, &m_Childless )
   {}
   
   virtual bool Contains( const key_T& key ) const override
@@ -87,8 +86,7 @@ public:
   
 private:
 
-  const MojoComplement< key_T >       m_Childless;
-  const MojoIntersection< key_T >     m_ChildlessInput;
+  const MojoDifference< key_T >       m_Childless;
   const MojoFunction< key_T, key_T >  m_Function;
   const MojoUnion< key_T >            m_Union;
 };
