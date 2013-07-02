@@ -205,7 +205,16 @@ void UnitTest::ExpectNotNull( const void* got, int line )
   bool success = ( got != NULL );
   if( !success )
   {
-    Error( "    %d: expected a string but got NULL\n", line );
+    Error( "    %d: expected a not NULL but got NULL\n", line );
+  }
+}
+
+void UnitTest::ExpectNull( const void* got, int line )
+{
+  bool success = ( got == NULL );
+  if( !success )
+  {
+    Error( "    %d: expected NULL but got not NULL\n", line );
   }
 }
 

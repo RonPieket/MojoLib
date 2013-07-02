@@ -35,7 +35,7 @@
 #include "MojoMultiMap.h"
 
 /**
- \class MojoManyToMany
+ \class MojoOneToMany
  \ingroup group_container
  Defines a many-to-one relation, such as child to parent. Each child can have only one parent. A parent can have
  any number of children.
@@ -44,13 +44,13 @@
  \tparam key_T Key type. Must be hashable.
  */
 template< typename child_key_T, typename parent_key_T >
-class MojoManyToMany final
+class MojoOneToMany final
 {
 public:
   /**
    Default constructor. You must call Create() before the map is ready for use.
    */
-  MojoManyToMany()
+  MojoOneToMany()
   {
     Init();
   }
@@ -65,7 +65,7 @@ public:
    \param[in] alloc Allocator to use. If omitted, the global default will be used. See documentation for MojoAlloc
    for details on how to set the global default.
    */
-  MojoManyToMany( const char* name, const child_key_T& child_not_found_value = child_key_T(),
+  MojoOneToMany( const char* name, const child_key_T& child_not_found_value = child_key_T(),
                const parent_key_T& parent_not_found_value = parent_key_T(), const MojoConfig* config = NULL,
                MojoAlloc* alloc = NULL )
   {
@@ -108,7 +108,7 @@ public:
    \return Status code.
    */
   MojoStatus InsertParentChild( const parent_key_T& parent, const child_key_T& child );
-
+  
   /**
    Remove all child's relation with parent. There is never more than one.
    \param[in] child Child of the parent-child relation to remove.
@@ -128,7 +128,7 @@ public:
    \param[in] child Child to look for.
    \return Parent of the child, or not_found_value.
    */
-  const MojoSet< parent_key_T >* FindParents( const child_key_T& child ) const;
+  parent_key_T FindParent( const child_key_T& child ) const;
 
   /**
    Find set of children of given parent
@@ -170,17 +170,17 @@ public:
    */
   const char* GetName() const { return m_Name; }
   
-  virtual ~MojoManyToMany();
+  virtual ~MojoOneToMany();
 
   const MojoMultiMap< parent_key_T, child_key_T >* GetParentToChildMultiMap() const { return &m_ParentToChild; }
-  const MojoMultiMap< child_key_T, parent_key_T >* GetChildToParentMultiMap() const { return &m_ChildToParent; }
+  const MojoMultiMap< child_key_T, parent_key_T >* GetChildToParentMap()      const { return &m_ChildToParent; }
 
   int _GetChangeCount() const { return m_ChildToParent._GetChangeCount() + m_ParentToChild._GetChangeCount(); }
 
 private:
   
   const char*                               m_Name;
-  MojoMultiMap< child_key_T, parent_key_T > m_ChildToParent;  // A child may have only one parent
+  MojoMap< child_key_T, parent_key_T >      m_ChildToParent;  // A child may have only one parent
   MojoMultiMap< parent_key_T, child_key_T > m_ParentToChild;  // A parent may have multiple children
 
   void Init();
@@ -190,13 +190,13 @@ private:
 // Inline implementations
 
 template< typename child_key_T, typename parent_key_T >
-void MojoManyToMany< child_key_T, parent_key_T >::Init()
+void MojoOneToMany< child_key_T, parent_key_T >::Init()
 {
   m_Name = NULL;
 }
 
 template< typename child_key_T, typename parent_key_T >
-MojoStatus MojoManyToMany< child_key_T, parent_key_T >::GetStatus() const
+MojoStatus MojoOneToMany< child_key_T, parent_key_T >::GetStatus() const
 {
   MojoStatus status = m_ParentToChild.GetStatus();
   if( !status )
@@ -207,7 +207,7 @@ MojoStatus MojoManyToMany< child_key_T, parent_key_T >::GetStatus() const
 }
 
 template< typename child_key_T, typename parent_key_T >
-MojoStatus MojoManyToMany< child_key_T, parent_key_T >::Create( const char* name,
+MojoStatus MojoOneToMany< child_key_T, parent_key_T >::Create( const char* name,
                                          const child_key_T& child_not_found_value,
                                          const parent_key_T& parent_not_found_value,
                                          const MojoConfig* config, MojoAlloc* alloc )
@@ -220,20 +220,20 @@ MojoStatus MojoManyToMany< child_key_T, parent_key_T >::Create( const char* name
 }
 
 template< typename child_key_T, typename parent_key_T >
-MojoManyToMany< child_key_T, parent_key_T >::~MojoManyToMany()
+MojoOneToMany< child_key_T, parent_key_T >::~MojoOneToMany()
 {
   Destroy();
 }
 
 template< typename child_key_T, typename parent_key_T >
-void MojoManyToMany< child_key_T, parent_key_T >::Destroy()
+void MojoOneToMany< child_key_T, parent_key_T >::Destroy()
 {
   m_ParentToChild.Destroy();
   m_ChildToParent.Destroy();
 }
 
 template< typename child_key_T, typename parent_key_T >
-MojoStatus MojoManyToMany< child_key_T, parent_key_T >::Clear()
+MojoStatus MojoOneToMany< child_key_T, parent_key_T >::Clear()
 {
   MojoStatus status1 = m_ParentToChild.Clear();
   MojoStatus status2 = m_ChildToParent.Clear();
@@ -241,7 +241,7 @@ MojoStatus MojoManyToMany< child_key_T, parent_key_T >::Clear()
 }
 
 template< typename child_key_T, typename parent_key_T >
-MojoStatus MojoManyToMany< child_key_T, parent_key_T >::InsertParentChild( const parent_key_T& parent, const child_key_T& child )
+MojoStatus MojoOneToMany< child_key_T, parent_key_T >::InsertParentChild( const parent_key_T& parent, const child_key_T& child )
 {
   MojoStatus status;
   if( parent.IsHashNull() )
@@ -254,6 +254,7 @@ MojoStatus MojoManyToMany< child_key_T, parent_key_T >::InsertParentChild( const
   }
   else
   {
+    RemoveChild( child );
     status = m_ChildToParent.Insert( child, parent );
     if( !status )
     {
@@ -264,26 +265,21 @@ MojoStatus MojoManyToMany< child_key_T, parent_key_T >::InsertParentChild( const
 }
 
 template< typename child_key_T, typename parent_key_T >
-MojoStatus MojoManyToMany< child_key_T, parent_key_T >::RemoveChild( const child_key_T& child )
+MojoStatus MojoOneToMany< child_key_T, parent_key_T >::RemoveChild( const child_key_T& child )
 {
   if( !child.IsHashNull() )
   {
-    const MojoSet< parent_key_T >* parents = m_ChildToParent.Find( child );
-    if( parents )
+    parent_key_T parent = m_ChildToParent.Remove( child );
+    if( !parent.IsHashNull() )
     {
-      parent_key_T parent;
-      MojoForEachKey( *parents, parent )
-      {
-        m_ParentToChild.Remove( parent, child );
-      }
+      return m_ParentToChild.Remove( parent, child );
     }
-    return m_ChildToParent.Remove( child );
   }
   return kMojoStatus_NotFound;
 }
 
 template< typename child_key_T, typename parent_key_T >
-MojoStatus MojoManyToMany< child_key_T, parent_key_T >::RemoveParent( const parent_key_T& parent )
+MojoStatus MojoOneToMany< child_key_T, parent_key_T >::RemoveParent( const parent_key_T& parent )
 {
   if( !parent.IsHashNull() )
   {
@@ -293,7 +289,7 @@ MojoStatus MojoManyToMany< child_key_T, parent_key_T >::RemoveParent( const pare
       child_key_T child;
       MojoForEachKey( *children, child )
       {
-        m_ChildToParent.Remove( child, parent );
+        m_ChildToParent.Remove( child );
       }
     }
     return m_ParentToChild.Remove( parent );
@@ -302,31 +298,31 @@ MojoStatus MojoManyToMany< child_key_T, parent_key_T >::RemoveParent( const pare
 }
 
 template< typename child_key_T, typename parent_key_T >
-bool MojoManyToMany< child_key_T, parent_key_T >::ContainsParent( const parent_key_T& parent ) const
+bool MojoOneToMany< child_key_T, parent_key_T >::ContainsParent( const parent_key_T& parent ) const
 {
   return m_ParentToChild.Contains( parent );
 }
 
 template< typename child_key_T, typename parent_key_T >
-bool MojoManyToMany< child_key_T, parent_key_T >::ContainsChild( const child_key_T& child ) const
+bool MojoOneToMany< child_key_T, parent_key_T >::ContainsChild( const child_key_T& child ) const
 {
   return m_ChildToParent.Contains( child );
 }
 
 template< typename child_key_T, typename parent_key_T >
-int MojoManyToMany< child_key_T, parent_key_T >::GetCount() const
+int MojoOneToMany< child_key_T, parent_key_T >::GetCount() const
 {
   return m_ChildToParent.GetCount();
 }
 
 template< typename child_key_T, typename parent_key_T >
-const MojoSet< parent_key_T >* MojoManyToMany< child_key_T, parent_key_T >::FindParents( const child_key_T& child ) const
+parent_key_T MojoOneToMany< child_key_T, parent_key_T >::FindParent( const child_key_T& child ) const
 {
   return m_ChildToParent.Find( child );
 }
 
 template< typename child_key_T, typename parent_key_T >
-const MojoSet< child_key_T >* MojoManyToMany< child_key_T, parent_key_T >::FindChildren( const parent_key_T& parent ) const
+const MojoSet< child_key_T >* MojoOneToMany< child_key_T, parent_key_T >::FindChildren( const parent_key_T& parent ) const
 {
   return m_ParentToChild.Find( parent );
 }

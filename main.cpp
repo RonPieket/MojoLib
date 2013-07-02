@@ -549,7 +549,7 @@ REGISTER_UNIT_TEST( MojoManyToManyTest, Container )
 
   MojoManyToMany< MojoId, MojoId > rel( "test" );
 
-  static const int n = 1000;
+  static const int n = 100;
 
   // For first half, insert consecutively
   for( char c = 'a'; c <= 'z'; ++c )
@@ -560,7 +560,7 @@ REGISTER_UNIT_TEST( MojoManyToManyTest, Container )
     for( int i = 0; i < n / 2; ++i )
     {
       MojoId child = MakeId( group, i );
-      rel.InsertChildParent( child, parent );
+      rel.InsertParentChild( parent, child );
     }
   }
   EXPECT_INT( 26 * n / 2, rel.GetCount() );
@@ -574,7 +574,7 @@ REGISTER_UNIT_TEST( MojoManyToManyTest, Container )
       snprintf( group, sizeof group, "%c", c );
       MojoId parent = group;
       MojoId child = MakeId( group, i );
-      rel.InsertChildParent( child, parent );
+      rel.InsertParentChild( parent, child );
     }
   }
   EXPECT_INT( 26 * n, rel.GetCount() );
@@ -680,6 +680,56 @@ REGISTER_UNIT_TEST( MojoManyToManyTest, Container )
 
   rel.Destroy();
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+
+REGISTER_UNIT_TEST( MojoOneToManyTest, Function )
+{
+  MojoOneToMany< MojoId, MojoId > one_to_many( "one_to_many" );
+
+  one_to_many.InsertParentChild( "A", "A1" );
+  one_to_many.InsertParentChild( "A", "A2" );
+  one_to_many.InsertParentChild( "A", "A3" );
+  one_to_many.InsertParentChild( "A", "C1" );
+
+  one_to_many.InsertParentChild( "B", "B1" );
+  one_to_many.InsertParentChild( "B", "B2" );
+  one_to_many.InsertParentChild( "B", "B3" );
+  one_to_many.InsertParentChild( "B", "C2" );
+
+  one_to_many.InsertParentChild( "C", "C1" );
+  one_to_many.InsertParentChild( "C", "C2" );
+  one_to_many.InsertParentChild( "C", "C3" );
+
+  one_to_many.InsertParentChild( "C", "C4" );
+  one_to_many.RemoveChild( "C4" );
+
+  one_to_many.InsertParentChild( "D", "D1" );
+  one_to_many.InsertParentChild( "D", "D2" );
+
+  one_to_many.RemoveParent( "D" );
+
+  EXPECT_TRUE ( one_to_many.ContainsParent( "A" ) );
+  EXPECT_TRUE ( one_to_many.ContainsChild( "A1" ) );
+  EXPECT_TRUE ( one_to_many.ContainsChild( "A2" ) );
+  EXPECT_FALSE( one_to_many.ContainsParent( "D" ) );
+  EXPECT_FALSE( one_to_many.ContainsChild( "D1" ) );
+  EXPECT_FALSE( one_to_many.ContainsChild( "D2" ) );
+
+  EXPECT_NOT_NULL( one_to_many.FindChildren( "A" ) );
+  EXPECT_INT( 3, one_to_many.FindChildren( "A" )->GetCount() );
+  EXPECT_NULL( one_to_many.FindChildren( "D" ) );
+
+  const char* parents[] =
+  { "A",  "A",  "A",  "B",  "B",  "B",  "C",  "C",  "C",  NULL };
+  const char* children[] =
+  { "A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3", "C4" };
+
+  for( int i = 0; i < ARRAY_SIZE( children ); ++i )
+  {
+    EXPECT_STRING( parents[ i ], one_to_many.FindParent( children[ i ] ).AsCString() );
+  }
 }
 
 // ---------------------------------------------------------------------------------------------------------------
