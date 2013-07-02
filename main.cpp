@@ -734,6 +734,47 @@ REGISTER_UNIT_TEST( MojoOneToManyTest, Function )
 
 // ---------------------------------------------------------------------------------------------------------------
 
+REGISTER_UNIT_TEST( MojoOneToOneTest, Function )
+{
+  MojoOneToOne< MojoId, MojoId > one_to_one( "one_to_one" );
+
+  one_to_one.InsertParentChild( "A", "A1" );
+  one_to_one.InsertParentChild( "A", "A2" );
+  one_to_one.InsertParentChild( "A", "A3" );
+  one_to_one.InsertParentChild( "A", "C1" );
+
+  one_to_one.InsertParentChild( "B", "B1" );
+  one_to_one.InsertParentChild( "B", "B2" );
+  one_to_one.InsertParentChild( "B", "B3" );
+  one_to_one.InsertParentChild( "B", "C2" );
+
+  one_to_one.InsertParentChild( "C", "C1" );
+  one_to_one.InsertParentChild( "C", "C2" );
+  one_to_one.InsertParentChild( "C", "C3" );
+
+  one_to_one.InsertParentChild( "D", "D1" );
+  one_to_one.InsertParentChild( "D", "D2" );
+
+  EXPECT_FALSE( one_to_one.ContainsParent( "A" ) );
+  EXPECT_FALSE( one_to_one.ContainsChild( "A1" ) );
+  EXPECT_FALSE( one_to_one.ContainsChild( "A2" ) );
+  EXPECT_TRUE ( one_to_one.ContainsParent( "D" ) );
+  EXPECT_FALSE( one_to_one.ContainsChild( "D1" ) );
+  EXPECT_TRUE ( one_to_one.ContainsChild( "D2" ) );
+
+  const char* parents[] =
+  { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,  "C",  NULL, "D" };
+  const char* children[] =
+  { "A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3", "D1", "D2" };
+
+  for( int i = 0; i < ARRAY_SIZE( children ); ++i )
+  {
+    EXPECT_STRING( parents[ i ], one_to_one.FindParent( children[ i ] ).AsCString() );
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+
 REGISTER_UNIT_TEST( MojoSetTestStatus, Config )
 {
   // Test invalid arguments

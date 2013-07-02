@@ -45,6 +45,7 @@
 #include "MojoArray.h"
 #include "MojoManyToMany.h"
 #include "MojoOneToMany.h"
+#include "MojoOneToOne.h"
 
 // -- Id
 #include "MojoId.h"
