@@ -543,11 +543,11 @@ static MojoId MakeId( const char* group, int number )
   return MojoId( buffer );
 }
 
-REGISTER_UNIT_TEST( MojoRelationTest, Container )
+REGISTER_UNIT_TEST( MojoManyToManyTest, Container )
 {
   EXPECT_INT( 0, MyCountingAlloc.m_ActiveAlloc );
 
-  MojoRelation< MojoId, MojoId > rel( "test" );
+  MojoManyToMany< MojoId, MojoId > rel( "test" );
 
   static const int n = 1000;
 
