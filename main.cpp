@@ -832,7 +832,6 @@ static int CountSet( const MojoAbstractSet< MojoId >* set )
   return output.GetCount();
 }
 
-
 class StringFilter final : public MojoAbstractSet< MojoId >
 {
 public:
@@ -913,12 +912,12 @@ REGISTER_UNIT_TEST( MojoBooleanTest, Boolean )
   EXPECT_INT( 2, CountSet( &human_powered_two_wheels ) );   // "Rickshaw", "Bicycle"
   EXPECT_INT( 1, CountSet( &human_powered_no_wheels ) );    // "Kayak"
   EXPECT_INT( 5, CountSet( &all_vehicles_four_wheels ) );   // "Sedan", "SUV", "American Flyer",
-  // "Golf Cart", "Pickup Truck"
+                                                            // "Golf Cart", "Pickup Truck"
   EXPECT_INT( 4, CountSet( &all_vehicles_two_wheels ) );    // "Electric Scooter", "Rickshaw", "Bicycle",
-  // "Motorcycle"
+                                                            // "Motorcycle"
   EXPECT_INT( 3, CountSet( &all_vehicles_no_wheels ) );     // "Kayak", "Yacht", "Helicopter"
   EXPECT_INT( 4, CountSet( &vehicles_with_er ) );           // "American Flyer", "18 Wheeler", "Electric Scooter",
-  // "Helicopter"
+                                                            // "Helicopter"
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -959,7 +958,7 @@ REGISTER_UNIT_TEST( MojoEqualityTest, Boolean )
 
 // ---------------------------------------------------------------------------------------------------------------
 
-REGISTER_UNIT_TEST( MojoFunctionTest, Function )
+REGISTER_UNIT_TEST( MojoMultiFunctionTest, Function )
 {
   MojoMultiMap< MojoId, MojoId > multi_map( "multi_map" );
   MojoSet< MojoId > input_set( "input_set" );
@@ -994,6 +993,49 @@ REGISTER_UNIT_TEST( MojoFunctionTest, Function )
   { false, false, false, true, true, true, false, false, false, true, true, true, true,  true,  true  };
   bool result_shallow[] =
   { false, false, false, true, true, true, false, false, false, true, true, true, false, false, false };
+
+  fn_deep.Enumerate( MojoSetCollector< MojoId >( &verify_deep ) );
+  fn_shallow.Enumerate( MojoSetCollector< MojoId >( &verify_shallow ) );
+
+  for( int i = 0; i < ARRAY_SIZE( all ); ++i )
+  {
+    MojoId id = all[ i ];
+    EXPECT_BOOL( result_deep[ i ],    verify_deep.Contains( id ) );
+    EXPECT_BOOL( result_shallow[ i ], verify_shallow.Contains( id ) );
+    EXPECT_BOOL( result_deep[ i ],    fn_deep.Contains( id ) );
+    EXPECT_BOOL( result_shallow[ i ], fn_shallow.Contains( id ) );
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+
+REGISTER_UNIT_TEST( MojoFunctionTest, Function )
+{
+  MojoMap< MojoId, MojoId > map( "map" );
+
+  MojoSet< MojoId > input_set( "input_set" );
+  MojoSet< MojoId > verify_deep( "verify_deep" );
+  MojoSet< MojoId > verify_shallow( "verify_shallow" );
+
+  MojoFunctionDeep< MojoId > fn_deep( &input_set, &map );
+  MojoFunction< MojoId, MojoId > fn_shallow( &input_set, &map );
+
+  map.Insert( "A", "A1" );  // A -> A1
+  map.Insert( "B", "B1" );  // B -> B1
+  map.Insert( "C", "C1" );  // C -> C1
+
+  map.Insert( "A1", "A1x" );  // A1 -> (A1x)
+  map.Insert( "C1", "C1x" );  // C1 -> (C1x)
+
+  input_set.Insert( "A" );
+  input_set.Insert( "C" );
+
+  const char* all[] =
+  { "A",   "B",   "C",   "A1", "B1",  "C1", "A1x", "C1x" };
+  bool result_deep[] =
+  { false, false, false, true, false, true, true,  true  };
+  bool result_shallow[] =
+  { false, false, false, true, false, true, false, false };
 
   fn_deep.Enumerate( MojoSetCollector< MojoId >( &verify_deep ) );
   fn_shallow.Enumerate( MojoSetCollector< MojoId >( &verify_shallow ) );

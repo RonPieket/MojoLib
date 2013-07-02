@@ -45,10 +45,10 @@
 template< typename key_T >
 class MojoFunctionDeep : public MojoAbstractSet< key_T >
 {
-  class EnumCollector final : public MojoCollector< key_T >
+  class EnumMultiCollector final : public MojoCollector< key_T >
   {
   public:
-    EnumCollector( const MojoCollector< key_T >& collector, const MojoMultiMap< key_T, key_T >* multi_map,
+    EnumMultiCollector( const MojoCollector< key_T >& collector, const MojoMultiMap< key_T, key_T >* multi_map,
                   const MojoAbstractSet< key_T >* limit )
     : m_Collector( collector )
     , m_MultiMap( multi_map )
@@ -58,7 +58,6 @@ class MojoFunctionDeep : public MojoAbstractSet< key_T >
     virtual bool Push( const key_T& key ) const override
     {
       const MojoSet< key_T >* values = m_MultiMap->Find( key );
-      //      return !( values && !values->Enumerate( m_Collector, m_Limit ) );
       if( !values )
       {
         return true;
@@ -68,7 +67,7 @@ class MojoFunctionDeep : public MojoAbstractSet< key_T >
         return false;
       }
       // The recursive part:
-      return values->Enumerate( EnumCollector( m_Collector, m_MultiMap, m_Limit ) );
+      return values->Enumerate( EnumMultiCollector( m_Collector, m_MultiMap, m_Limit ) );
     }
 
   private:
@@ -77,21 +76,18 @@ class MojoFunctionDeep : public MojoAbstractSet< key_T >
     const MojoAbstractSet< key_T >*     m_Limit;
   };
 
-  class TestCollector final : public MojoCollector< key_T >
+  class TestMultiCollector final : public MojoCollector< key_T >
   {
   public:
-    TestCollector( const MojoMultiMap< key_T, key_T >* multi_map, const key_T& value )
+    TestMultiCollector( const MojoMultiMap< key_T, key_T >* multi_map, const key_T& value )
     : m_Value( value )
     , m_MultiMap( multi_map )
     {}
 
-    // return false if contains
     virtual bool Push( const key_T& key ) const override
     {
       const MojoSet< key_T >* values = m_MultiMap->Find( key );
       // Must return _false_ if found, true if not found (keep searching)
-      //      return !( values && values->Contains( m_Value ) );
-
       if( !values )
       {
         return true;
@@ -101,38 +97,147 @@ class MojoFunctionDeep : public MojoAbstractSet< key_T >
         return false;
       }
       // The recursive part:
-      return values->Enumerate( TestCollector( m_MultiMap, m_Value ) );
+      return values->Enumerate( TestMultiCollector( m_MultiMap, m_Value ) );
     }
 
   private:
     key_T m_Value;
     const MojoMultiMap< key_T, key_T >* m_MultiMap;
   };
+  
+  class EnumCollector final : public MojoCollector< key_T >
+  {
+  public:
+    EnumCollector( const MojoCollector< key_T >& collector, const MojoMap< key_T, key_T >* map,
+                  const MojoAbstractSet< key_T >* limit )
+    : m_Collector( collector )
+    , m_Map( map )
+    , m_Limit( limit )
+    {}
 
+    virtual bool Push( const key_T& key ) const override
+    {
+      key_T value = m_Map->Find( key );
+      while( !value.IsHashNull() )
+      {
+        if( !m_Limit || m_Limit->Contains( value ) )
+        {
+          if( !m_Collector.Push( value ) )
+          {
+            return false;
+          }
+        }
+        value = m_Map->Find( value );
+      }
+      return true;
+    }
+
+  private:
+    const MojoCollector< key_T >&   m_Collector;
+    const MojoMap< key_T, key_T >*  m_Map;
+    const MojoAbstractSet< key_T >* m_Limit;
+  };
+
+  class TestCollector final : public MojoCollector< key_T >
+  {
+  public:
+    TestCollector( const MojoMap< key_T, key_T >* map, const key_T& value )
+    : m_Value( value )
+    , m_Map( map )
+    {}
+
+    virtual bool Push( const key_T& key ) const override
+    {
+      key_T value = m_Map->Find( key );
+      // Must return _false_ if found, true if not found (keep searching)
+      while( !value.IsHashNull() )
+      {
+        if( value == m_Value )
+        {
+          return false;
+        }
+        // The recursive part:
+        value = m_Map->Find( value );
+      }
+      return true;
+    }
+
+  private:
+    key_T m_Value;
+    const MojoMap< key_T, key_T >* m_Map;
+  };
+  
 public:
   MojoFunctionDeep( const MojoAbstractSet< key_T >* input_set, const MojoMultiMap< key_T, key_T >* multi_map )
   : m_InputSet( input_set )
   , m_MultiMap( multi_map )
+  , m_Map( NULL )
+  {}
+
+  MojoFunctionDeep( const MojoAbstractSet< key_T >* input_set, const MojoMap< key_T, key_T >* map )
+  : m_InputSet( input_set )
+  , m_MultiMap( NULL )
+  , m_Map( map )
   {}
 
   virtual bool Contains( const key_T& value ) const
   {
-    return !m_InputSet->Enumerate( TestCollector( m_MultiMap, value ) );
+    if( m_MultiMap )
+    {
+      return !m_InputSet->Enumerate( TestMultiCollector( m_MultiMap, value ) );
+    }
+    else if( m_Map )
+    {
+      return !m_InputSet->Enumerate( TestCollector( m_Map, value ) );
+    }
+    return false;
   }
 
   virtual bool Enumerate( const MojoCollector< key_T >& collector,
                          const MojoAbstractSet< key_T >* limit = NULL ) const
   {
-    return m_InputSet->Enumerate( EnumCollector( collector, m_MultiMap, limit ) );
+    if( m_MultiMap )
+    {
+      return m_InputSet->Enumerate( EnumMultiCollector( collector, m_MultiMap, limit ) );
+    }
+    else if( m_Map )
+    {
+      return m_InputSet->Enumerate( EnumCollector( collector, m_Map, limit ) );
+    }
+    return true;
   }
 
-  virtual int _GetEnumerationCost() const { return m_MultiMap->_GetEnumerationCost(); }
+  virtual int _GetEnumerationCost() const
+  {
+    if( m_MultiMap )
+    {
+      return m_MultiMap->_GetEnumerationCost();
+    }
+    else if( m_Map )
+    {
+      return m_Map->_GetEnumerationCost();
+    }
+    return 0;
+  }
 
-  virtual int _GetChangeCount() const { return m_MultiMap->_GetChangeCount(); }
+  virtual int _GetChangeCount() const
+  {
+    if( m_MultiMap )
+    {
+      return m_MultiMap->_GetChangeCount();
+    }
+    else if( m_Map )
+    {
+      return m_Map->_GetChangeCount();
+    }
+    return 0;
+  }
+
 private:
 
   const MojoAbstractSet< key_T >*     m_InputSet;
   const MojoMultiMap< key_T, key_T >* m_MultiMap;
+  const MojoMap< key_T, key_T >*      m_Map;
 };
 
 // ---------------------------------------------------------------------------------------------------------------
