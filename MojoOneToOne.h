@@ -180,7 +180,7 @@ public:
 private:
 
   const char*                           m_Name;
-  MojoMap< parent_key_T, child_key_T >  m_ChildToParent;  // A child may have only one parent
+  MojoMap< child_key_T, parent_key_T >  m_ChildToParent;  // A child may have only one parent
   MojoMap< parent_key_T, child_key_T >  m_ParentToChild;  // A parent may have multiple children
 
   void Init();
